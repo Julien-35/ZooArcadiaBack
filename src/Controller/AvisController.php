@@ -170,3 +170,4 @@ class AvisController extends AbstractController
         return $this->json(['message' => "L'avis a été supprimé."], Response::HTTP_NO_CONTENT);
     }
 }
+

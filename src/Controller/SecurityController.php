@@ -118,10 +118,6 @@ class SecurityController extends AbstractController
 )]
 
 
-
-
-
-
     public function login(#[CurrentUser] ?User $user): JsonResponse
     {
 
