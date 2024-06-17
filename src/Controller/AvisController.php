@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Avis;
 use App\Repository\AvisRepository;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\Routing\Annotation\Route;
@@ -63,21 +64,19 @@ header("Access-Control-Allow-Headers: X-Requested-With");
 
 class AvisController extends AbstractController
 {
+
+
     public function __construct(
-        private EntityManagerInterface $manager,
-        private AvisRepository $repository,
-        private SerializerInterface $serializer,
-        private UrlGeneratorInterface $urlGenerator,
+        public EntityManagerInterface $manager,
+        public AvisRepository $repository,
+        public SerializerInterface $serializer,
+        public UrlGeneratorInterface $urlGenerator,
     ){
-
-
-        
     }
 
     #[Route('/post',name:'avis')]
     public function new(Request $request): JsonResponse
 
-    
     {
         if (isset($_SERVER['HTTP_ORIGIN'])) {
             // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
@@ -105,13 +104,16 @@ class AvisController extends AbstractController
         $this->manager->persist($avis);
         $this->manager->flush();
 
-        return new JsonResponse([
-            'pseudo'  => $avis->getPseudo(),
-            'commentaire' => $avis->getCommentaire(),
-            'is_visible' => $avis->isIsVisible(),
-        ],
-            Response::HTTP_CREATED
+            return new JsonResponse([
+                'pseudo'  => $avis->getPseudo(),
+                'commentaire' => $avis->getCommentaire(),
+                'isVisible' => $avis->isIsVisible(),
+            ],
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
+
+        Response::HTTP_CREATED;
+
     }
 
 
@@ -126,7 +128,8 @@ class AvisController extends AbstractController
             header('Access-Control-Allow-Credentials: true');
             header('Access-Control-Max-Age: 86400');    // cache for 1 day
         }
-        
+         
+
         // Access-Control headers are received during OPTIONS requests
         if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
             
@@ -148,26 +151,56 @@ class AvisController extends AbstractController
     #[Route('/{id}', name: 'edit')]
     public function edit(int $id, Request $request): Response
     {
-        $data = json_decode($request->getContent(), true);
-        $avis = $this->repository->findOneBy(['id' => $id]);
-        if (!$avis) {
-            throw $this->createNotFoundException("Aucun avis trouvé pour {$id} id");
+        if (isset($_SERVER['HTTP_ORIGIN'])) {
+            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
+            // you want to allow, and if so:
+            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Max-Age: 86400');    // cache for 1 day
         }
-        $avis->setAvis($data);
-        $this->manager->flush();
-        return $this->redirectToRoute('app_api_arcadia_avis_show', ['id' => $avis->getId()]);
-    }
+         
 
+        // Access-Control headers are received during OPTIONS requests
+        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+            
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+                // may also be using PUT, PATCH, HEAD etc
+                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
+            
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+        
+            exit(0);
+        }
 
-    public function delete(int $id): Response
     {
         $avis = $this->repository->findOneBy(['id' => $id]);
-        if (!$avis) {
-            throw $this->createNotFoundException("Aucun avis trouvé {$id} id");
-        }
-        $this->manager->remove($avis);
+        if ($avis) {
+            $avis = $this->serializer->deserialize(
+                $request->getContent(),
+                Service::class,
+                    'json',
+                [AbstractNormalizer::OBJECT_TO_POPULATE => $avis]
+            );
         $this->manager->flush();
-        return $this->json(['message' => "L'avis a été supprimé."], Response::HTTP_NO_CONTENT);
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
+    return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+    }
+}
+
+
+
+//     public function delete(int $id): Response
+//     {
+//         $avis = $this->repository->findOneBy(['id' => $id]);
+//         if (!$avis) {
+//             throw $this->createNotFoundException("Aucun avis trouvé {$id} id");
+//         }
+//         $this->manager->remove($avis);
+//         $this->manager->flush();
+//         return $this->json(['message' => "L'avis a été supprimé."], Response::HTTP_NO_CONTENT);
+//     }
 }
 

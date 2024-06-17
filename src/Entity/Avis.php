@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\AvisRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AvisRepository::class)]
@@ -11,16 +13,16 @@ class Avis
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $pseudo = null;
+    public ?string $pseudo = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $commentaire = null;
+    public ?string $commentaire = null;
 
     #[ORM\Column]
-    private ?bool $isVisible = null;
+    public ?bool $isVisible = null;
 
     public function getId(): ?int
     {
@@ -71,6 +73,7 @@ class Avis
         return $this;
     }
 
+    
     // public function get(): ?array
     // {
     //     return $this;
