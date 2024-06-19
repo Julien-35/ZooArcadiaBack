@@ -2,8 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\Service;
-use App\Repository\ServiceRepository;
+use App\Entity\Horaire;
+use DateTimeImmutable ;
+use App\Repository\HoraireRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\Routing\Annotation\Route;
@@ -20,14 +21,12 @@ use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Schema;
 
 
-
-
-#[Route('api/service', name:'app_api_arcadia_service_')]
-class ServiceController extends AbstractController
+#[Route('api/horaire', name:'app_api_arcadia_horaire_')]
+class HoraireController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $manager,
-        private ServiceRepository $repository,
+        private HoraireRepository $repository,
         private SerializerInterface $serializer,
         private UrlGeneratorInterface $urlGenerator,
     ){
@@ -36,103 +35,54 @@ class ServiceController extends AbstractController
 
     #[Route(methods:'POST')]
     #[OA\Post(
-        path:"/api/service",
-        summary:"Ajouter un service ",
+        path:"/api/horaire",
+        summary:"Ajouter un horaire ",
         requestBody : new RequestBody(
         required: true,
-        description : "Indiquer la description du service",
+        description : "Indiquer les informations concernants l'horaire",
         content : [new Mediatype(mediaType: "application/json",
         schema : new Schema (type: "object", properties:[
         new Property (
-            property: "nom",
+            property: "Prénom",
             type : 'string',
-            example :'Service de restauration'
+            example :'Choukette'
         ),
         new Property (
-            property: "description",
+            property: "Etat de l'horaire",
             type : "string",
-            example : "Plusieurs services de restaurations sont disponibles partout sur le parc"
+            example : "Ne mange plus. Attention à surveiller"
         )
 ]))]
 
-
         ),
     )]
     #[OA\Response(
         response: 200,
-        description: 'Création du service',
+        description: "Création de l'horaire",
         content: new OA\JsonContent(
             type: 'string',
         )
     )]
-
     public function new(Request $request): JsonResponse
-    {
 
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
-            // you want to allow, and if so:
-            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-            header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Max-Age: 86400');    // cache for 1 day
-        }
-        
-        // Access-Control headers are received during OPTIONS requests
-        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-                // may also be using PUT, PATCH, HEAD etc
-                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-        
-            exit(0);
-        }
-
-        $service = $this->serializer->deserialize($request->getContent(), Service::class, 'json');
-
-        $this->manager->persist($service);
-        $this->manager->flush();
-        
-        $responseData = $this->serializer->serialize($service,'json');
-        
-        $location = $this->urlGenerator->generate(
-            'app_api_arcadia_service_show',[
-                'id' => $service->getId(),
-                'nom' => $service->getNom(),
-                'description' => $service->getDescription(),
-        
-        ],
-            UrlGeneratorInterface::ABSOLUTE_URL,
-        );
-
-        return new JsonResponse($responseData, Response::HTTP_CREATED,["Location" => $location], true);
-
-    }
-
-
-    #[Route('/get', name: 'show')]
-    #[OA\Get(
-        path:"/api/service/{id}",
-        summary:"Voir un service depuis son id",
+        {
+            $horaire = $this->serializer->deserialize($request->getContent(), Horaire::class, 'json');
     
-    )]
-    #[OA\Response(
-        response: 200,
-        description: 'Retourner le service via son ID',
-        content: new OA\JsonContent(
-            type: 'string',
-        )
-    )]
-
-    #[OA\Parameter(
-        name: 'nom du service',
-        in: 'query',
-
-    )]
+            $this->manager->persist($horaire);
+            $this->manager->flush();
+            
+            $responseData = $this->serializer->serialize($horaire,'json');
+            
+            $location = $this->urlGenerator->generate(
+                'app_api_arcadia_horaire_show',
+                ['id' => $horaire->getId()],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            );
+            return new JsonResponse($responseData, Response::HTTP_CREATED,["Location" => $location], true);
+        }
 
 
+    #[Route('/get',name:'show')]
     public function show(): JsonResponse 
     {
         if (isset($_SERVER['HTTP_ORIGIN'])) {
@@ -155,13 +105,16 @@ class ServiceController extends AbstractController
         
             exit(0);
         }
-        $service = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($service, 'json');
+        $horaire = $this->repository->findAll();
+        $responseData = $this->serializer->serialize($horaire, 'json');
 
         return new JsonResponse($responseData, Response::HTTP_OK, [], true);
     } 
 
 
+
+
+    
     #[Route('/{id}', name:'edit')]
     public function edit(int $id, Request $request): JsonResponse
     {  if (isset($_SERVER['HTTP_ORIGIN'])) {
@@ -184,13 +137,13 @@ class ServiceController extends AbstractController
     
         exit(0);
     }
-        $service = $this->repository->findOneBy(['id' => $id]);
-        if ($service) {
-            $service = $this->serializer->deserialize(
+        $horaire = $this->repository->findOneBy(['id' => $id]);
+        if ($horaire) {
+            $horaire = $this->serializer->deserialize(
                 $request->getContent(),
-                Service::class,
+                Horaire::class,
                     'json',
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $service]
+                [AbstractNormalizer::OBJECT_TO_POPULATE => $horaire]
             );
         $this->manager->flush();
 
@@ -199,12 +152,13 @@ class ServiceController extends AbstractController
     return new JsonResponse(null, Response::HTTP_NOT_FOUND);
     }
 
+
     #[Route('/{id}',name:'delete', methods: 'DELETE')]
     public function delete(int $id): JsonResponse
     {
-        $service = $this->repository->findOneBy(['id' => $id]);
-        if ($service) {
-            $this->manager->remove($service);
+        $horaire = $this->repository->findOneBy(['id' => $id]);
+        if ($horaire) {
+            $this->manager->remove($horaire);
             $this->manager->flush();
 
             return new JsonResponse(NULL, Response ::HTTP_NO_CONTENT);
@@ -212,5 +166,3 @@ class ServiceController extends AbstractController
         return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
     }
 }
-
-

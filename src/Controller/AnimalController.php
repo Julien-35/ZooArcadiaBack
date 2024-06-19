@@ -74,7 +74,7 @@ class AnimalController extends AbstractController
             $responseData = $this->serializer->serialize($animal,'json');
             
             $location = $this->urlGenerator->generate(
-                'app_api_arcadia_service_show',
+                'app_api_arcadia_animal_show',
                 ['id' => $animal->getId()],
                 UrlGeneratorInterface::ABSOLUTE_URL,
             );
@@ -82,16 +82,34 @@ class AnimalController extends AbstractController
         }
 
 
-    #[Route('/{prenom}',name:'show', methods: 'GET')]
-    public function show(string $prenom): JsonResponse
+    #[Route('/get',name:'show')]
+    public function show(): JsonResponse 
     {
-        $animal = $this->repository->FindOneBy (['prenom'=> $prenom]);
-        if ($animal) {
-            $responseData = $this->serializer->serialize($animal, 'json');
-            return new JsonResponse($responseData, Response ::HTTP_OK,[], true);
+        if (isset($_SERVER['HTTP_ORIGIN'])) {
+            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
+            // you want to allow, and if so:
+            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Max-Age: 86400');    // cache for 1 day
         }
-        return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
-    }
+        
+        // Access-Control headers are received during OPTIONS requests
+        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+            
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+                // may also be using PUT, PATCH, HEAD etc
+                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
+            
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+        
+            exit(0);
+        }
+        $animal = $this->repository->findAll();
+        $responseData = $this->serializer->serialize($animal, 'json');
+
+        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+    } 
 
 
 

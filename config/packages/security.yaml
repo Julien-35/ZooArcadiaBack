@@ -36,7 +36,10 @@ security:
          - { path : ^/api/doc, roles : PUBLIC_ACCESS }
          - { path : ^/api/avis, roles : PUBLIC_ACCESS }
          - { path : ^/api/service, roles : PUBLIC_ACCESS }
+         - { path : ^/api/animal, roles : PUBLIC_ACCESS }
+         - { path : ^/api/horaire, roles : PUBLIC_ACCESS }
          - { path : ^/api, roles : ROLE_USER }
+
 
         # config/packages/security.yaml
 
