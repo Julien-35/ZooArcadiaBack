@@ -18,14 +18,12 @@ class Habitat
     #[ORM\Column(length: 50)]
     private ?string $nom = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 250)]
     private ?string $description = null;
 
     #[ORM\Column(length: 50)]
     private ?string $commentaire_habitat = null;
 
-    #[ORM\ManyToOne(inversedBy: 'habitat')]
-    private ?animal $animal = null;
 
     #[ORM\ManyToMany(targetEntity: Image::class, mappedBy: 'habitat')]
     private Collection $images;
@@ -76,17 +74,6 @@ class Habitat
         return $this;
     }
 
-    public function getAnimal(): ?animal
-    {
-        return $this->animal;
-    }
-
-    public function setAnimal(?animal $animal): static
-    {
-        $this->animal = $animal;
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, Image>
@@ -114,4 +101,8 @@ class Habitat
 
         return $this;
     }
+
+
+
 }
+

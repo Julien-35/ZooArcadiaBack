@@ -1,0 +1,10 @@
+{# templates/image/list.html.twig #}
+<h1>Images</h1>
+<div id="images">
+    {% for image in images %}
+        <div>
+            <h2>{{ image.name }}</h2>
+            <img src="{{ asset('uploads/images/' ~ image.filename) }}" alt="{{ image.name }}">
+        </div>
+    {% endfor %}
+</div>

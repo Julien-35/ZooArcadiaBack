@@ -22,18 +22,21 @@ class Animal
     private ?string $etat = null;
 
     #[ORM\ManyToOne]
-    private ?RapportVeterinaire $RapportVeterinaire = null;
+    private ?Race $Race = null;
 
-    #[ORM\OneToMany(targetEntity: Race::class, mappedBy: 'Animal')]
-    private Collection $races;
+    #[ORM\ManyToOne]
+    private ?Habitat $Habitat = null;
 
-    #[ORM\OneToMany(targetEntity: Habitat::class, mappedBy: 'animal')]
-    private Collection $habitats;
+    #[ORM\ManyToOne]
+    private ?Nourriture $Nourriture = null;
+
 
     public function __construct()
     {
         $this->races = new ArrayCollection();
         $this->habitats = new ArrayCollection();
+        $this->nourritures = new ArrayCollection();
+
     }
 
     public function getId(): ?int
@@ -65,75 +68,42 @@ class Animal
         return $this;
     }
 
-    public function getRapportVeterinaire(): ?RapportVeterinaire
+
+    public function getHabitat(): ?Habitat
     {
-        return $this->RapportVeterinaire;
+        return $this->Habitat;
     }
 
-    public function setRapportVeterinaire(?RapportVeterinaire $RapportVeterinaire): static
+    public function setHabitat(?Habitat $Habitat): static
     {
-        $this->RapportVeterinaire = $RapportVeterinaire;
+        $this->Habitat = $Habitat;
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, Race>
-     */
-    public function getRaces(): Collection
+    public function getRace(): ?Race
     {
-        return $this->races;
+        return $this->Race;
     }
 
-    public function addRace(Race $race): static
+    public function setRace(?Race $Race): static
     {
-        if (!$this->races->contains($race)) {
-            $this->races->add($race);
-            $race->setAnimal($this);
-        }
+        $this->Race = $Race;
 
         return $this;
     }
 
-    public function removeRace(Race $race): static
+    
+    public function getNourriture(): ?Nourriture
     {
-        if ($this->races->removeElement($race)) {
-            // set the owning side to null (unless already changed)
-            if ($race->getAnimal() === $this) {
-                $race->setAnimal(null);
-            }
-        }
+        return $this->Nourriture;
+    }
+
+    public function setNourriture(?Nourriture $Nourriture): static
+    {
+        $this->Nourriture = $Nourriture;
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, Habitat>
-     */
-    public function getHabitats(): Collection
-    {
-        return $this->habitats;
-    }
-
-    public function addHabitat(Habitat $habitat): static
-    {
-        if (!$this->habitats->contains($habitat)) {
-            $this->habitats->add($habitat);
-            $habitat->setAnimal($this);
-        }
-
-        return $this;
-    }
-
-    public function removeHabitat(Habitat $habitat): static
-    {
-        if ($this->habitats->removeElement($habitat)) {
-            // set the owning side to null (unless already changed)
-            if ($habitat->getAnimal() === $this) {
-                $habitat->setAnimal(null);
-            }
-        }
-
-        return $this;
-    }
 }

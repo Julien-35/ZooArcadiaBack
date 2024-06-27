@@ -25,6 +25,20 @@ use OpenApi\Attributes\Schema;
 #[Route('api/rapportveterinaire', name:'app_api_arcadia_rapportveterinaire_')]
 class RapportVeterinaireController extends AbstractController
 {
+
+    public function getTodayDate(): JsonResponse
+    {
+        // Obtenir la date actuelle
+        $today = new \DateTime();
+        // Formater la date au format YYYY-MM-DD
+        $formattedDate = $today->format('Y-m-d');
+
+        // Retourner la date en réponse JSON
+        return new JsonResponse(['date' => $formattedDate]);
+    }
+
+
+
     public function __construct(
         private EntityManagerInterface $manager,
         private RapportVeterinaireRepository $repository,
@@ -46,7 +60,11 @@ class RapportVeterinaireController extends AbstractController
         
         $location = $this->urlGenerator->generate(
             'app_api_arcadia_rapportveterinaire_show',
-            ['id' => $rapportveterinaire->getId()],
+            [
+           
+             'date' => $rapportveterinaire->getDate(),
+             'detail' => $rapportveterinaire->getDetail(),
+        ],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
@@ -55,17 +73,37 @@ class RapportVeterinaireController extends AbstractController
     }
 
 
-    #[Route('/{id}',name:'show', methods: 'GET')]
-    public function show(int $id): JsonResponse
+    #[Route('/get',name:'show')]
+    public function show(): JsonResponse
     {
-        $rapportveterinaire = $this->repository->FindOneBy (['id'=> $id]);
-        if ($rapportveterinaire) {
-            $responseData = $this->serializer->serialize($rapportveterinaire, 'json');
-            return new JsonResponse($responseData, Response ::HTTP_OK,[], true);
+        if (isset($_SERVER['HTTP_ORIGIN'])) {
+            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
+            // you want to allow, and if so:
+            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Max-Age: 86400');    // cache for 1 day
         }
-        return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
-    }
+        
+        // Access-Control headers are received during OPTIONS requests
+        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+            
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+                // may also be using PUT, PATCH, HEAD etc
+                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
+            
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+        
+            exit(0);
+        }
 
+        $rapportveterinaire = $this->repository->findAll();
+        $responseData = $this->serializer->serialize($rapportveterinaire, 'json');
+
+        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+
+
+    } 
 
 
 

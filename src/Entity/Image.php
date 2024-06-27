@@ -9,6 +9,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ImageRepository::class)]
+
 class Image
 {
     #[ORM\Id]
@@ -19,7 +20,7 @@ class Image
     #[ORM\Column(type: Types::BLOB)]
     private $image_data = null;
 
-    #[ORM\ManyToMany(targetEntity: habitat::class, inversedBy: 'images')]
+    #[ORM\ManyToMany(targetEntity: Habitat::class, inversedBy: 'images')]
     private Collection $habitat;
 
     public function __construct()

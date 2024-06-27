@@ -20,6 +20,15 @@ class RapportVeterinaire
     #[ORM\Column(length: 50)]
     private ?string $detail = null;
 
+
+    #[ORM\ManyToOne]
+    private ?Animal $Animal = null;
+
+    public function __construct()
+    {
+        $this->animals = new ArrayCollection();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -45,6 +54,19 @@ class RapportVeterinaire
     public function setDetail(string $detail): static
     {
         $this->detail = $detail;
+
+        return $this;
+    }
+
+
+    public function getAnimal(): ?Animal
+    {
+        return $this->Animal;
+    }
+
+    public function setAnimal(?Animal $Animal): static
+    {
+        $this->Animal = $Animal;
 
         return $this;
     }

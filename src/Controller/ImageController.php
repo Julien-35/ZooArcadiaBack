@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+
 use App\Entity\Image;
 use DateTimeImmutable ;
 use App\Repository\ImageRepository;
@@ -12,6 +13,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use App\Form\ImageType; 
 use OpenApi\Attributes as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes\RequestBody;
@@ -34,69 +37,137 @@ class ImageController extends AbstractController
 
     }
 
-    #[Route(methods:'POST')]
-    public function new(Request $request): JsonResponse
+    #[Route('/upload', name: 'post')]
+
+    public function upload(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
     {
-        $image = $this->serializer->deserialize($request->getContent(), Image::class, 'json');
+        $image = new Image();
+        $form = $this->createForm(ImageType::class, $image);
 
-        $this->manager->persist($image);
-        $this->manager->flush();
-        
-        $responseData = $this->serializer->serialize($image,'json');
-        
-        $location = $this->urlGenerator->generate(
-            'app_api_arcadia_image_show',
-            ['id' => $image->getId()],
-            UrlGeneratorInterface::ABSOLUTE_URL,
-        );
+        $form->handleRequest($request);
 
-        return new JsonResponse($responseData, Response::HTTP_CREATED,["Location" => $location], true);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $file = $form['filename']->getData();
+            if ($file) {
+                $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename.'-'.uniqid().'.'.$file->guessExtension();
 
-    }
+                try {
+                    $file->move(
+                        $this->getParameter('images_directory'),
+                        $newFilename
+                    );
+                } catch (FileException $e) {
+                    // handle exception if something happens during file upload
+                }
 
+                $image->setFilename($newFilename);
+                $em->persist($image);
+                $em->flush();
 
-    #[Route('/{id}',name:'show', methods: 'GET')]
-    public function show(int $id): JsonResponse
-    {
-        $image = $this->repository->FindOneBy (['id'=> $id]);
-        if ($image) {
-            $responseData = $this->serializer->serialize($image, 'json');
-            return new JsonResponse($responseData, Response ::HTTP_OK,[], true);
+                return $this->redirectToRoute('image_upload');
+            }
         }
-        return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
+
+        return $this->render('image/upload.html.twig', [
+            'form' => $form->createView(),
+        ]);
     }
 
-
-
-
-    #[Route('/{id}', name:'edit', methods: 'PUT')]
-    public function edit(int $id, Request $request): JsonResponse
+    /**
+     * @Route("/images", name="image_list")
+     */
+    public function list(EntityManagerInterface $em): Response
     {
-        $image = $this->repository->findOneBy(['id' => $id]);
-        if ($image) {
-            $image = $this->serializer->deserialize(
-                $request->getContent(),
-                    Image::class,
-                    'json',
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $image]
-            );
-        $this->manager->flush();
+        $images = $em->getRepository(Image::class)->findAll();
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
-    }
-    return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-    }
-
-    #[Route('/{id}',name:'delete', methods: 'DELETE')]
-    public function delete(int $id): JsonResponse
-    {
-        $image = $this->repository->findOneBy(['id' => $id]);
-        if ($image) {
-            $this->manager->remove($image);
-            $this->manager->flush();
-
-            return new JsonResponse(NULL, Response ::HTTP_NO_CONTENT);
-        }
-        return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
+        return $this->render('image/list.html.twig', [
+            'images' => $images,
+        ]);
     }
 }
+
+
+//     #[Route('/get', name: 'show')]
+//     public function show(): JsonResponse 
+//     {
+//         if (isset($_SERVER['HTTP_ORIGIN'])) {
+//             // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
+//             // you want to allow, and if so:
+//             header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+//             header('Access-Control-Allow-Credentials: true');
+//             header('Access-Control-Max-Age: 86400');    // cache for 1 day
+//         }
+         
+
+//         // Access-Control headers are received during OPTIONS requests
+//         if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+            
+//             if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+//                 // may also be using PUT, PATCH, HEAD etc
+//                 header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
+            
+//             if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+//                 header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+        
+//             exit(0);
+//         }
+//         $image = $this->repository->findAll();
+//         $responseData = $this->serializer->serialize($image, 'json');
+
+//         return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+//     } 
+
+//     #[Route('/{id}', name: 'edit')]
+//     public function edit(int $id,Request $request): Response
+//     {  if (isset($_SERVER['HTTP_ORIGIN'])) {
+//         // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
+//         // you want to allow, and if so:
+//         header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+//         header('Access-Control-Allow-Credentials: true');
+//         header('Access-Control-Max-Age: 86400');    // cache for 1 day
+//     }
+    
+//     // Access-Control headers are received during OPTIONS requests
+//     if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        
+//         if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+//             // may also be using PUT, PATCH, HEAD etc
+//             header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
+        
+//         if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+//             header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+    
+//         exit(0);
+//     }
+//         $image = $this->repository->findOneBy(['id' => $id]);
+//         if ($image) {
+//             $image = $this->serializer->deserialize(
+//                 $request->getContent(),
+//                 Image::class,
+//                     'json',
+//                 [AbstractNormalizer::OBJECT_TO_POPULATE => $image]
+//             );
+//         $this->manager->flush();
+
+//         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+//     }
+//     return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+//     }
+
+
+
+
+// //     public function delete(int $id): Response
+// //     {
+// //         $image = $this->repository->findOneBy(['id' => $id]);
+// //         if (!$image) {
+// //             throw $this->createNotFoundException("Aucun image trouvé {$id} id");
+// //         }
+// //         $this->manager->remove($image);
+// //         $this->manager->flush();
+// //         return $this->json(['message' => "L'image a été supprimé."], Response::HTTP_NO_CONTENT);
+// //     }
+// }
+

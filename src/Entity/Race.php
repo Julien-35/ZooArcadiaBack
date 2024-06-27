@@ -15,9 +15,8 @@ class Race
 
     #[ORM\Column(length: 50)]
     private ?string $label = null;
+        
 
-    #[ORM\ManyToOne(inversedBy: 'races')]
-    private ?Animal $Animal = null;
 
     public function getId(): ?int
     {
@@ -36,15 +35,4 @@ class Race
         return $this;
     }
 
-    public function getAnimal(): ?Animal
-    {
-        return $this->Animal;
-    }
-
-    public function setAnimal(?Animal $Animal): static
-    {
-        $this->Animal = $Animal;
-
-        return $this;
-    }
 }
