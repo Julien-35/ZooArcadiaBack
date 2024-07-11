@@ -21,9 +21,11 @@ class Habitat
     #[ORM\Column(length: 250)]
     private ?string $description = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 250)]
     private ?string $commentaire_habitat = null;
 
+    #[ORM\OneToMany(targetEntity: Animal::class, mappedBy: 'habitat')]
+    private Collection $animals;
 
     #[ORM\ManyToMany(targetEntity: Image::class, mappedBy: 'habitat')]
     private Collection $images;
@@ -31,6 +33,7 @@ class Habitat
     public function __construct()
     {
         $this->images = new ArrayCollection();
+        $this->animals = new ArrayCollection();
     }
 
     public function getId(): ?int

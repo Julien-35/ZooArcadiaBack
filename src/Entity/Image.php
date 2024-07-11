@@ -9,7 +9,6 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ImageRepository::class)]
-
 class Image
 {
     #[ORM\Id]
@@ -20,12 +19,14 @@ class Image
     #[ORM\Column(type: Types::BLOB)]
     private $image_data = null;
 
+    
     #[ORM\ManyToMany(targetEntity: Habitat::class, inversedBy: 'images')]
     private Collection $habitat;
 
+
     public function __construct()
     {
-        $this->habitat = new ArrayCollection();
+        $this->habitats = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -44,16 +45,30 @@ class Image
 
         return $this;
     }
+    
+    public function getImageResource()
+    {
+        return $this->image_data;
+    }
+
+    public function setImageResource($image_data): static
+    {
+        $this->image_data = fopen('php://memory','r+');
+        fwrite($this->image_data, $image_data);
+        rewind($this->image_data);
+
+        return $this;
+    }
 
     /**
-     * @return Collection<int, habitat>
+     * @return Collection<int, Habitat>
      */
     public function getHabitat(): Collection
     {
         return $this->habitat;
     }
 
-    public function addHabitat(habitat $habitat): static
+    public function addHabitat(Habitat $habitat): static
     {
         if (!$this->habitat->contains($habitat)) {
             $this->habitat->add($habitat);
@@ -62,7 +77,7 @@ class Image
         return $this;
     }
 
-    public function removeHabitat(habitat $habitat): static
+    public function removeHabitat(Habitat $habitat): static
     {
         $this->habitat->removeElement($habitat);
 

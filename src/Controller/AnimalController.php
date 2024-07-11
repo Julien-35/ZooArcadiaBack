@@ -3,10 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\Animal;
-use DateTimeImmutable ;
+use App\Entity\Habitat; 
+use App\Entity\Race; 
 use App\Repository\AnimalRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -21,6 +24,7 @@ use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Schema;
 
 
+
 #[Route('api/animal', name:'app_api_arcadia_animal_')]
 class AnimalController extends AbstractController
 {
@@ -29,130 +33,174 @@ class AnimalController extends AbstractController
         private AnimalRepository $repository,
         private SerializerInterface $serializer,
         private UrlGeneratorInterface $urlGenerator,
-    ){
+    ){}
 
-    }
-
-    #[Route(methods:'POST')]
+    #[Route('/post', name:'app_api_arcadia_animal_post', methods:['POST'])]
     #[OA\Post(
-        path:"/api/animal",
-        summary:"Ajouter un animal ",
-        requestBody : new RequestBody(
-        required: true,
-        description : "Indiquer les informations concernants l'animal",
-        content : [new Mediatype(mediaType: "application/json",
-        schema : new Schema (type: "object", properties:[
-        new Property (
-            property: "Prénom",
-            type : 'string',
-            example :'Choukette'
-        ),
-        new Property (
-            property: "Etat de l'animal",
-            type : "string",
-            example : "Ne mange plus. Attention à surveiller"
+        path:"/api/animal/post",
+        summary:"Créer un nouvel animal",
+        requestBody: new RequestBody(
+            required: true,
+            description: "Pour créer un nouvel animal, suivez les informations ci-dessous",
+            content: new MediaType(
+                mediaType: "application/json",
+                schema: new Schema(
+                    type: "object",
+                    properties: [
+                        new Property(property: "prenom", type: "string", example: "Dromdrom"),
+                        new Property(property: "etat", type: "string", example: "Mal au ventre"),
+                        new Property(property: "nourriture", type: "string", example: "Sable"),
+                        new Property(property: "grammage", type: "string", example: "5kg"),
+                        new Property(property: "habitat_id", type: "integer", example: 1),
+                        new Property(property: "race_id", type: "integer", example: 1),
+                        new Property(property: "image_data", type: "string", example: "base64encodedstring")
+                    ]
+                )
+            )
         )
-]))]
-
-        ),
     )]
     #[OA\Response(
         response: 200,
         description: "Création de l'animal",
-        content: new OA\JsonContent(
-            type: 'string',
-        )
+        content: new OA\JsonContent(type: 'string')
     )]
     public function new(Request $request): JsonResponse
-
-        {
-            $animal = $this->serializer->deserialize($request->getContent(), Animal::class, 'json');
+    {
+        $data = json_decode($request->getContent(), true);
+        $animal = new Animal();
+        $animal->setPrenom($data['prenom']);
+        $animal->setEtat($data['etat']);
+        $animal->setNourriture($data['nourriture']);
+        $animal->setGrammage($data['grammage']);
     
-            $this->manager->persist($animal);
-            $this->manager->flush();
-            
-            $responseData = $this->serializer->serialize($animal,'json');
-            
-            $location = $this->urlGenerator->generate(
-                'app_api_arcadia_animal_show',
-                ['id' => $animal->getId()],
-                UrlGeneratorInterface::ABSOLUTE_URL,
-            );
-            return new JsonResponse($responseData, Response::HTTP_CREATED,["Location" => $location], true);
+        $habitat = $this->manager->getRepository(Habitat::class)->find($data['habitat_id']);
+        if ($habitat) {
+            $animal->setHabitat($habitat);
         }
 
-
-    #[Route('/get',name:'show')]
-    public function show(): JsonResponse 
-    {
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
-            // you want to allow, and if so:
-            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-            header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Max-Age: 86400');    // cache for 1 day
+        $race = $this->manager->getRepository(Race::class)->find($data['race_id']);
+        if ($race) {
+            $animal->setHabitat($race);
         }
+    
+        $animal->setImageData($data['image_data']);
         
-        // Access-Control headers are received during OPTIONS requests
-        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-                // may also be using PUT, PATCH, HEAD etc
-                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-        
-            exit(0);
+        if (isset($data['created_at']) && $this->validateDate($data['created_at'], 'Y-m-d')) {
+            $animal->setCreatedAt(new \DateTime($data['created_at']));
+        } else {
+            $animal->setCreatedAt(new \DateTime()); // Définir la date actuelle si la date est invalide ou absente
         }
-        $animal = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($animal, 'json');
-
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
-    } 
-
-
-
-
-    #[Route('/{id}', name:'edit')]
-    public function edit(int $id, Request $request): JsonResponse
-    {
-
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
-            // you want to allow, and if so:
-            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-            header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Max-Age: 86400');    // cache for 1 day
+    
+        if (isset($data['feeding_time']) && $this->validateDate($data['feeding_time'], 'H:i:s')) {
+            $animal->setFeedingTime(new \DateTime($data['feeding_time']));
         }
-        
-        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-        
-            exit(0);
-        }
-
-        $animal = $this->repository->findOneBy(['id' => $id]);
-        if ($animal) {
-            $animal = $this->serializer->deserialize(
-                $request->getContent(),
-                    Animal::class,
-                    'json',
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $animal]
-            );
+    
+        $this->manager->persist($animal);
         $this->manager->flush();
-
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    
+        $responseData = $this->serializer->serialize($animal, 'json');
+    
+        $location = $this->urlGenerator->generate(
+            'app_api_arcadia_animal_show',
+            ['id' => $animal->getId()],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+        return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
     }
-    return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+    
+    private function validateDate($date, $format = 'Y-m-d')
+    {
+        $d = \DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format) === $date;
     }
 
-    #[Route('/{id}',name:'delete', methods: 'DELETE')]
+    #[Route('/get', name: 'show', methods: ['GET'])]
+    public function show(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse 
+    {
+        $queryBuilder = $entityManager->createQueryBuilder();
+        $queryBuilder->select('a', 'h', 'r')
+            ->from(Animal::class, 'a')
+            ->leftJoin('a.habitat', 'h')
+            ->leftJoin('a.race', 'r');
+    
+        $query = $queryBuilder->getQuery();
+        $animals = $query->getArrayResult();
+    
+        $responseData = $serializer->serialize($animals, 'json');
+    
+        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/prenoms', name: 'get_all_prenoms', methods: ['GET'])]
+    public function getAllPrenoms(): JsonResponse
+    {
+        $animals = $this->animalRepository->findAll();
+        $prenoms = array_map(fn($animal) => $animal->getPrenom(), $animals);
+
+        return new JsonResponse($prenoms);
+    }
+
+
+    #[Route('/api/habitat', name: 'app_api_arcadia_animal_get_habitats', methods: ['GET'])]
+    public function getHabitats(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
+    {
+        $habitats = $entityManager->getRepository(Habitat::class)->findAll();
+        $responseData = $serializer->serialize($habitats, 'json');
+        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/api/race', name: 'app_api_arcadia_animal_get_races', methods: ['GET'])]
+    public function getRaces(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
+    {
+        $races = $entityManager->getRepository(Race::class)->findAll();
+        $responseData = $serializer->serialize($races, 'json');
+        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/{id}', name: 'edit', methods: ['PUT'])]
+
+    public function updateAnimal(Request $request, EntityManagerInterface $entityManager, $id): Response
+    {
+        $animal = $entityManager->getRepository(Animal::class)->find($id);
+    
+        if (!$animal) {
+            throw $this->createNotFoundException('Animal not found');
+        }
+    
+        $data = json_decode($request->getContent(), true);
+    
+        if (isset($data['image_data'])) {
+            $animal->setImageData($data['image_data']);
+        }
+    
+        if (isset($data['prenom'])) {
+            $animal->setPrenom($data['prenom']);
+        }
+        if (isset($data['etat'])) {
+            $animal->setEtat($data['etat']);
+        }
+        if (isset($data['nourriture'])) {
+            $animal->setNourriture($data['nourriture']);
+        }
+        if (isset($data['grammage'])) {
+            $animal->setGrammage($data['grammage']);
+        }
+        if (isset($data['created_at'])) {
+            $animal->setCreatedAt(new \DateTime($data['created_at']));
+        }
+        if (isset($data['feeding_time'])) {
+            $animal->setFeedingTime(new \DateTime($data['feeding_time']));
+        }
+    
+        $entityManager->persist($animal);
+        $entityManager->flush();
+    
+        return new Response('Animal updated successfully');
+    }
+    
+    
+    
+    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
     {
         $animal = $this->repository->findOneBy(['id' => $id]);
@@ -160,8 +208,10 @@ class AnimalController extends AbstractController
             $this->manager->remove($animal);
             $this->manager->flush();
 
-            return new JsonResponse(NULL, Response ::HTTP_NO_CONTENT);
+            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
         }
-        return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
+        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
     }
+    
+
 }

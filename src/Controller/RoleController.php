@@ -21,6 +21,7 @@ use OpenApi\Attributes\Schema;
 
 
 
+
 #[Route('api/role', name:'app_api_arcadia_role_')]
 class RoleController extends AbstractController
 {
@@ -30,10 +31,9 @@ class RoleController extends AbstractController
         private SerializerInterface $serializer,
         private UrlGeneratorInterface $urlGenerator,
     ){
-
     }
 
-    #[Route(methods:'POST')]
+    #[Route('api/role', name:'app_api_arcadia_role_' , methods:'POST')]
     public function new(Request $request): JsonResponse
     {
         $role = $this->serializer->deserialize($request->getContent(), Role::class, 'json');

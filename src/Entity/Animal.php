@@ -2,7 +2,10 @@
 
 namespace App\Entity;
 
+use Symfony\Component\HttpFoundation\File;
 use App\Repository\AnimalRepository;
+use Doctrine\DBAL\Types\Types;
+
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -21,22 +24,36 @@ class Animal
     #[ORM\Column(length: 50)]
     private ?string $etat = null;
 
-    #[ORM\ManyToOne]
-    private ?Race $Race = null;
+    #[ORM\Column(length: 50)]
+    private ?string $nourriture = null;
 
-    #[ORM\ManyToOne]
-    private ?Habitat $Habitat = null;
+    #[ORM\Column(length: 50)]
+    private ?string $grammage = null;
 
-    #[ORM\ManyToOne]
-    private ?Nourriture $Nourriture = null;
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $created_at = null;
+
+    #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $feeding_time = null;
+
+    #[ORM\ManyToOne(targetEntity: Habitat::class, cascade: ['persist'])]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Habitat $habitat = null;
+
+    #[ORM\ManyToOne(targetEntity: Race::class, cascade: ['persist'])]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Race $race = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true, length: 500000)]
+    private ?string $image_data = null;
+
+    #[ORM\OneToMany(mappedBy: 'animal', targetEntity: RapportVeterinaire::class)]
+    private Collection $rapportsVeterinaires;
 
 
     public function __construct()
     {
-        $this->races = new ArrayCollection();
-        $this->habitats = new ArrayCollection();
-        $this->nourritures = new ArrayCollection();
-
+        $this->rapportsVeterinaires = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -44,6 +61,18 @@ class Animal
         return $this->id;
     }
 
+    public function getImageData(): ?string
+    {
+        return $this->image_data;
+    }
+    
+    public function setImageData(?string $image_data): self
+    {
+        $this->image_data = $image_data;
+
+        return $this;
+    }
+    
     public function getPrenom(): ?string
     {
         return $this->prenom;
@@ -68,42 +97,101 @@ class Animal
         return $this;
     }
 
+    public function getNourriture(): ?string
+    {
+        return $this->nourriture;
+    }
+
+    public function setNourriture(string $nourriture): static
+    {
+        $this->nourriture = $nourriture;
+
+        return $this;
+    }
+
+    public function getGrammage(): ?string
+    {
+        return $this->grammage;
+    }
+
+    public function setGrammage(string $grammage): static
+    {
+        $this->grammage = $grammage;
+
+        return $this;
+    }
+
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $created_at): self
+    {
+        $this->created_at = $created_at;
+        return $this;
+    }
+
+    public function getFeedingTime(): ?\DateTimeInterface
+    {
+        return $this->feeding_time;
+    }
+
+    public function setFeedingTime(\DateTimeInterface $feeding_time): self
+    {
+        $this->feeding_time = $feeding_time;
+        return $this;
+    }
 
     public function getHabitat(): ?Habitat
     {
-        return $this->Habitat;
+        return $this->habitat;
     }
 
-    public function setHabitat(?Habitat $Habitat): static
+    public function setHabitat(?Habitat $habitat): self
     {
-        $this->Habitat = $Habitat;
+        $this->habitat = $habitat;
 
         return $this;
     }
 
     public function getRace(): ?Race
     {
-        return $this->Race;
+        return $this->race;
     }
-
-    public function setRace(?Race $Race): static
-    {
-        $this->Race = $Race;
-
-        return $this;
-    }
-
     
-    public function getNourriture(): ?Nourriture
+    public function setRace(?Race $race): self
     {
-        return $this->Nourriture;
-    }
-
-    public function setNourriture(?Nourriture $Nourriture): static
-    {
-        $this->Nourriture = $Nourriture;
-
+        $this->race = $race;
+    
         return $this;
     }
 
+    public function getRapportsVeterinaires(): Collection
+    {
+        return $this->rapportsVeterinaires;
+    }
+
+    // public function addRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): self
+    // {
+    //     if (!$this->rapportsVeterinaires->contains($rapportVeterinaire)) {
+    //         $this->rapportsVeterinaires[] = $rapportVeterinaire;
+    //         $rapportVeterinaire->setAnimal($this);
+    //     }
+
+    //     return $this;
+    // }
+
+    // public function removeRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): self
+    // {
+    //     if ($this->rapportsVeterinaires->removeElement($rapportVeterinaire)) {
+    //         if ($rapportVeterinaire->getAnimal() === $this) {
+    //             $rapportVeterinaire->setAnimal(null);
+    //         }
+    //     }
+
+    //     return $this;
+    // }
+ 
 }

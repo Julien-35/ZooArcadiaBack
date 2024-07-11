@@ -21,22 +21,21 @@ use OpenApi\Attributes\Schema;
 
 
 
-
 #[Route('api/service', name:'app_api_arcadia_service_')]
 class ServiceController extends AbstractController
 {
+    
     public function __construct(
         private EntityManagerInterface $manager,
         private ServiceRepository $repository,
         private SerializerInterface $serializer,
         private UrlGeneratorInterface $urlGenerator,
     ){
-
     }
 
-    #[Route(methods:'POST')]
+    #[Route('/post', name:'app_api_arcadia_service_', methods : ['POST'])]
     #[OA\Post(
-        path:"/api/service",
+        path:"/test",
         summary:"Ajouter un service ",
         requestBody : new RequestBody(
         required: true,
@@ -66,53 +65,24 @@ class ServiceController extends AbstractController
         )
     )]
 
-    public function new(Request $request): JsonResponse
+    public function new(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
 
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
-            // you want to allow, and if so:
-            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-            header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Max-Age: 86400');    // cache for 1 day
-        }
-        
-        // Access-Control headers are received during OPTIONS requests
-        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-                // may also be using PUT, PATCH, HEAD etc
-                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-        
-            exit(0);
-        }
+        $service = new Service();
+        $service->setNom($data['nom']);
+        $service->setDescription($data['description']);
 
-        $service = $this->serializer->deserialize($request->getContent(), Service::class, 'json');
+        $entityManager->persist($service);
+        $entityManager->flush();
 
-        $this->manager->persist($service);
-        $this->manager->flush();
-        
-        $responseData = $this->serializer->serialize($service,'json');
-        
-        $location = $this->urlGenerator->generate(
-            'app_api_arcadia_service_show',[
-                'id' => $service->getId(),
-                'nom' => $service->getNom(),
-                'description' => $service->getDescription(),
-        
-        ],
-            UrlGeneratorInterface::ABSOLUTE_URL,
-        );
+        $responseData = $serializer->serialize($service, 'json');
 
-        return new JsonResponse($responseData, Response::HTTP_CREATED,["Location" => $location], true);
-
+        return new JsonResponse($responseData, Response::HTTP_CREATED, [], true);
     }
 
 
-    #[Route('/get', name: 'show')]
+    #[Route('/get', name: 'show', methods:['GET'])]
     #[OA\Get(
         path:"/api/service/{id}",
         summary:"Voir un service depuis son id",
@@ -135,26 +105,6 @@ class ServiceController extends AbstractController
 
     public function show(): JsonResponse 
     {
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
-            // you want to allow, and if so:
-            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-            header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Max-Age: 86400');    // cache for 1 day
-        }
-        
-        // Access-Control headers are received during OPTIONS requests
-        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-                // may also be using PUT, PATCH, HEAD etc
-                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-        
-            exit(0);
-        }
         $service = $this->repository->findAll();
         $responseData = $this->serializer->serialize($service, 'json');
 
@@ -162,28 +112,9 @@ class ServiceController extends AbstractController
     } 
 
 
-    #[Route('/{id}', name:'edit')]
+    #[Route('/{id}', name:'edit', methods : ['PUT'])]
     public function edit(int $id, Request $request): JsonResponse
-    {  if (isset($_SERVER['HTTP_ORIGIN'])) {
-        // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
-        // you want to allow, and if so:
-        header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-        header('Access-Control-Allow-Credentials: true');
-        header('Access-Control-Max-Age: 86400');    // cache for 1 day
-    }
-    
-    // Access-Control headers are received during OPTIONS requests
-    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-        
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-            // may also be using PUT, PATCH, HEAD etc
-            header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
-        
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-            header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-    
-        exit(0);
-    }
+    { 
         $service = $this->repository->findOneBy(['id' => $id]);
         if ($service) {
             $service = $this->serializer->deserialize(
@@ -199,7 +130,7 @@ class ServiceController extends AbstractController
     return new JsonResponse(null, Response::HTTP_NOT_FOUND);
     }
 
-    #[Route('/{id}',name:'delete', methods: 'DELETE')]
+    #[Route('/{id}',name:'delete', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
     {
         $service = $this->repository->findOneBy(['id' => $id]);

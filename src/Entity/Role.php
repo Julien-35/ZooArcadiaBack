@@ -12,18 +12,18 @@ class Role
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 50, unique: true)]
     private ?string $label = null;
 
-    #[ORM\ManyToOne]
-    private ?User $user = null;
+    #[ORM\OneToMany(mappedBy: 'role', targetEntity: User::class, cascade: ['persist', 'remove'])]
+    private Collection $users;
 
     public function __construct()
     {
-        $this->user = new ArrayCollection();
+        $this->users = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -39,25 +39,39 @@ class Role
     public function setLabel(string $label): static
     {
         $this->label = $label;
-
         return $this;
     }
 
     /**
      * @return Collection<int, User>
      */
-    public function getUser(): Collection
+    public function getUsers(): Collection
     {
-        return $this->user;
+        return $this->users;
     }
 
-  
-
-    public function setUser(?User $user): static
+    public function addUser(User $user): static
     {
-        $this->user = $user;
+        if (!$this->users->contains($user)) {
+            $this->users->add($user);
+            // Assurez-vous que la relation est bidirectionnelle
+            if ($user->getRole() !== $this) {
+                $user->setRole($this);
+            }
+        }
 
         return $this;
     }
 
+    public function removeUser(User $user): static
+    {
+        if ($this->users->removeElement($user)) {
+            // Assurez-vous que la relation est bidirectionnelle
+            if ($user->getRole() === $this) {
+                $user->setRole(null);
+            }
+        }
+
+        return $this;
+    }
 }

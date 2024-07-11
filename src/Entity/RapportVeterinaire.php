@@ -3,8 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\RapportVeterinaireRepository;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\DBAL\Types\Types;
 
 #[ORM\Entity(repositoryClass: RapportVeterinaireRepository::class)]
 class RapportVeterinaire
@@ -20,14 +20,9 @@ class RapportVeterinaire
     #[ORM\Column(length: 50)]
     private ?string $detail = null;
 
+    #[ORM\ManyToOne(targetEntity: Animal::class, inversedBy: 'rapportsVeterinaires')]
+    private ?Animal $animal = null;
 
-    #[ORM\ManyToOne]
-    private ?Animal $Animal = null;
-
-    public function __construct()
-    {
-        $this->animals = new ArrayCollection();
-    }
 
     public function getId(): ?int
     {
@@ -39,7 +34,7 @@ class RapportVeterinaire
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): static
+    public function setDate(\DateTimeInterface $date): self
     {
         $this->date = $date;
 
@@ -51,22 +46,21 @@ class RapportVeterinaire
         return $this->detail;
     }
 
-    public function setDetail(string $detail): static
+    public function setDetail(string $detail): self
     {
         $this->detail = $detail;
 
         return $this;
     }
 
-
     public function getAnimal(): ?Animal
     {
-        return $this->Animal;
+        return $this->animal;
     }
 
-    public function setAnimal(?Animal $Animal): static
+    public function setAnimal(?Animal $animal): self
     {
-        $this->Animal = $Animal;
+        $this->animal = $animal;
 
         return $this;
     }

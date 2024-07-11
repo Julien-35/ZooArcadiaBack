@@ -21,42 +21,8 @@ use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Schema;
 
 
+
 #[Route('api/avis', name:'app_api_arcadia_avis_')]
-#[OA\Post(
-    path:"/api/avis",
-    summary:"Ajouter un avis ",
-    requestBody : new RequestBody(
-    required: true,
-    description : "Votre message ",
-    content : [new Mediatype(mediaType: "application/json",
-    schema : new Schema (type: "object", properties:[
-    new Property (
-        property: "pseudo",
-        type : 'string',
-        example :'Le rugbyman'
-    ),
-    new Property (
-        property: "commentaire",
-        type : "string",
-        example : "Le zoo en famille est toujours génial"
-    ),
-
-    new Property (
-        property: "is_visible",
-        type : "boolean",
-        example : "true"
-    )
-]))]
-
-    ),
-)]
-#[OA\Response(
-    response: 200,
-    description: "Création de l'animal",
-    content: new OA\JsonContent(
-        type: 'string',
-    )
-)]
 
 class AvisController extends AbstractController
 {
@@ -65,105 +31,76 @@ class AvisController extends AbstractController
         public AvisRepository $repository,
         public SerializerInterface $serializer,
         public UrlGeneratorInterface $urlGenerator,
-    ){
-    }
+    )
+    { 
+}
 
-    #[Route('/post',name:'avis')]
-    public function new(Request $request): JsonResponse
+    #[Route('/post',name:'avis', methods:['POST'])]
+    #[OA\Post(
+        path:"/api/avis/post",
+        summary:"Créer un nouvel avis",
+        requestBody : new RequestBody(required: true,
+            description : "Pour créer un nouvel avis, suivez les informations ci-dessous",
+            content : [new Mediatype(mediaType: "application/json",
+                schema : new Schema (type: "object", properties:[
+                    new Property (
+                        property: "pseudo",
+                        type : 'string',
+                        example :'DUDU'
+                    ),
+                    new Property (
+                        property: "commentaire",
+                        type : 'string',
+                        example :'test commentaire'
+                    ),
+                    new Property (
+                        property: "isVisible",
+                        type : 'bool',
+                        example : true
+                    ),
+                ])
+            )]
+        )
+    )]
+
+    #[OA\Response(
+        response: 200,
+        description: "Création de l'avis",
+        content: new OA\JsonContent(
+            type: 'string',
+        )
+    )]
+    public function new(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
 
     {
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
-            // you want to allow, and if so:
-            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-            header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Max-Age: 86400');    // cache for 1 day
-        }
-         
+        $data = json_decode($request->getContent(), true);
 
-        // Access-Control headers are received during OPTIONS requests
-        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-                // may also be using PUT, PATCH, HEAD etc
-                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-        
-            exit(0);
-        }
+        $avis = new Avis();
+        $avis->setPseudo($data['pseudo']);
+        $avis->setCommentaire($data['commentaire']);
+        $avis->setIsVisible($data['isVisible']);
 
-        $avis = $this->serializer->deserialize($request->getContent(), Avis::class, 'json');
-        $this->manager->persist($avis);
-        $this->manager->flush();
+        $entityManager->persist($avis);
+        $entityManager->flush();
 
-            return new JsonResponse([
-                'pseudo'  => $avis->getPseudo(),
-                'commentaire' => $avis->getCommentaire(),
-                'isVisible' => $avis->isIsVisible(),
-            ],
-            UrlGeneratorInterface::ABSOLUTE_URL,
-        );
+        $responseData = $serializer->serialize($avis, 'json');
 
-        Response::HTTP_CREATED;
-
+        return new JsonResponse($responseData, Response::HTTP_CREATED, [], true);
     }
 
 
-
-    #[Route('/get', name: 'show')]
+    #[Route('/get', name:'show', methods:['GET'])]
     public function show(): JsonResponse 
-    {
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
-            // you want to allow, and if so:
-            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-            header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Max-Age: 86400');    // cache for 1 day
-        }
-         
-
-        // Access-Control headers are received during OPTIONS requests
-        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-                // may also be using PUT, PATCH, HEAD etc
-                header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
-            
-            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-        
-            exit(0);
-        }
+    { 
         $avis = $this->repository->findAll();
         $responseData = $this->serializer->serialize($avis, 'json');
 
         return new JsonResponse($responseData, Response::HTTP_OK, [], true);
     } 
 
-    #[Route('/{id}', name: 'edit')]
+    #[Route('/{id}', name: 'edit', methods:['PUT'])]
     public function edit(int $id,Request $request): Response
-    {  if (isset($_SERVER['HTTP_ORIGIN'])) {
-        // Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
-        // you want to allow, and if so:
-        header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-        header('Access-Control-Allow-Credentials: true');
-        header('Access-Control-Max-Age: 86400');    // cache for 1 day
-    }
-    
-    // Access-Control headers are received during OPTIONS requests
-    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-        
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-            // may also be using PUT, PATCH, HEAD etc
-            header('Access-Control-Allow-Methods: POST, GET, DELETE, PUT, PATCH, OPTIONS');
-        
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-            header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-    
-        exit(0);
-    }
+    { 
         $avis = $this->repository->findOneBy(['id' => $id]);
         if ($avis) {
             $avis = $this->serializer->deserialize(
@@ -178,19 +115,5 @@ class AvisController extends AbstractController
     }
     return new JsonResponse(null, Response::HTTP_NOT_FOUND);
     }
-
-
-
-
-//     public function delete(int $id): Response
-//     {
-//         $avis = $this->repository->findOneBy(['id' => $id]);
-//         if (!$avis) {
-//             throw $this->createNotFoundException("Aucun avis trouvé {$id} id");
-//         }
-//         $this->manager->remove($avis);
-//         $this->manager->flush();
-//         return $this->json(['message' => "L'avis a été supprimé."], Response::HTTP_NO_CONTENT);
-//     }
 }
 
