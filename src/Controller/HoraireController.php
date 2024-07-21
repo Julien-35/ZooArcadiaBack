@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-#[Route('api/horaire', name: 'app_api_arcadia_horaire_')]
+#[Route('api/horaires', name: 'app_api_arcadia_horaire_')]
 class HoraireController extends AbstractController
 {
     public function __construct(
@@ -49,28 +49,28 @@ class HoraireController extends AbstractController
     public function edit(int $id, Request $request): JsonResponse
     {
         $horaire = $this->repository->find($id);
-
+    
         if (!$horaire) {
             return new JsonResponse(['error' => 'No horaire found for id ' . $id], Response::HTTP_NOT_FOUND);
         }
-
+    
         $data = json_decode($request->getContent(), true);
-
+    
         // Assurez-vous que les noms de champs correspondent à ceux attendus
         $titre = $data['titre'] ?? $horaire->getTitre();
         $message = $data['message'] ?? $horaire->getMessage();
         $heureDebut = $data['heureDebut'] ?? $horaire->getHeureDebut();
         $heureFin = $data['heureFin'] ?? $horaire->getHeureFin();
         $jour = $data['jour'] ?? $horaire->getJour();
-
+    
         $horaire->setTitre($titre);
         $horaire->setMessage($message);
         $horaire->setHeureDebut($heureDebut);
         $horaire->setHeureFin($heureFin);
         $horaire->setJour($jour);
-
+    
         $this->manager->flush();
-
+    
         $responseData = $this->serializer->serialize($horaire, 'json');
         return new JsonResponse($responseData, Response::HTTP_OK, [], true);
     }

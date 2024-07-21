@@ -35,10 +35,10 @@ class AnimalController extends AbstractController
         private UrlGeneratorInterface $urlGenerator,
     ){}
 
-    #[Route('/post', name:'app_api_arcadia_animal_post', methods:['POST'])]
+    #[Route('/post', name: 'app_api_arcadia_animal_post', methods: ['POST'])]
     #[OA\Post(
-        path:"/api/animal/post",
-        summary:"Créer un nouvel animal",
+        path: "/api/animal/post",
+        summary: "Créer un nouvel animal",
         requestBody: new RequestBody(
             required: true,
             description: "Pour créer un nouvel animal, suivez les informations ci-dessous",
@@ -53,59 +53,56 @@ class AnimalController extends AbstractController
                         new Property(property: "grammage", type: "string", example: "5kg"),
                         new Property(property: "habitat_id", type: "integer", example: 1),
                         new Property(property: "race_id", type: "integer", example: 1),
-                        new Property(property: "image_data", type: "string", example: "base64encodedstring")
+                        new Property(property: "image_data", type: "string", example: "base64encodedstring"),
+                        new Property(property: "created_at", type: "string", example: "2024-07-08"),
+                        new Property(property: "feeding_time", type: "string", example: "19:52:00")
                     ]
                 )
             )
         )
     )]
     #[OA\Response(
-        response: 200,
+        response: 201,
         description: "Création de l'animal",
         content: new OA\JsonContent(type: 'string')
     )]
     public function new(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $animal = new Animal();
-        $animal->setPrenom($data['prenom']);
-        $animal->setEtat($data['etat']);
-        $animal->setNourriture($data['nourriture']);
-        $animal->setGrammage($data['grammage']);
+        try {
+            $data = json_decode($request->getContent(), true);
     
-        $habitat = $this->manager->getRepository(Habitat::class)->find($data['habitat_id']);
-        if ($habitat) {
+            $animal = new Animal();
+            $animal->setPrenom($data['prenom']);
+            $animal->setEtat($data['etat']);
+            $animal->setNourriture($data['nourriture']);
+            $animal->setGrammage($data['grammage']);
+    
+            $habitat = $this->manager->getRepository(Habitat::class)->find($data['habitat_id']);
+            if (!$habitat) {
+                return new JsonResponse(['error' => 'Habitat non trouvé'], Response::HTTP_NOT_FOUND);
+            }
             $animal->setHabitat($habitat);
+    
+            $race = $this->manager->getRepository(Race::class)->find($data['race_id']);
+            if (!$race) {
+                return new JsonResponse(['error' => 'Race non trouvée'], Response::HTTP_NOT_FOUND);
+            }
+            $animal->setRace($race);
+    
+            $animal->setImageData($data['image_data']);
+    
+            $animal->setCreatedAt(isset($data['created_at']) && $this->validateDate($data['created_at'], 'Y-m-d') ? new \DateTime($data['created_at']) : new \DateTime());
+            if (isset($data['feeding_time']) && $this->validateDate($data['feeding_time'], 'H:i:s')) {
+                $animal->setFeedingTime(new \DateTime($data['feeding_time']));
+            }
+    
+            $this->manager->persist($animal);
+            $this->manager->flush();
+    
+            return new JsonResponse(['message' => 'Animal créé avec succès'], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $race = $this->manager->getRepository(Race::class)->find($data['race_id']);
-        if ($race) {
-            $animal->setHabitat($race);
-        }
-    
-        $animal->setImageData($data['image_data']);
-        
-        if (isset($data['created_at']) && $this->validateDate($data['created_at'], 'Y-m-d')) {
-            $animal->setCreatedAt(new \DateTime($data['created_at']));
-        } else {
-            $animal->setCreatedAt(new \DateTime()); // Définir la date actuelle si la date est invalide ou absente
-        }
-    
-        if (isset($data['feeding_time']) && $this->validateDate($data['feeding_time'], 'H:i:s')) {
-            $animal->setFeedingTime(new \DateTime($data['feeding_time']));
-        }
-    
-        $this->manager->persist($animal);
-        $this->manager->flush();
-    
-        $responseData = $this->serializer->serialize($animal, 'json');
-    
-        $location = $this->urlGenerator->generate(
-            'app_api_arcadia_animal_show',
-            ['id' => $animal->getId()],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
-        return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
     }
     
     private function validateDate($date, $format = 'Y-m-d')
@@ -113,7 +110,6 @@ class AnimalController extends AbstractController
         $d = \DateTime::createFromFormat($format, $date);
         return $d && $d->format($format) === $date;
     }
-
     #[Route('/get', name: 'show', methods: ['GET'])]
     public function show(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse 
     {
@@ -200,17 +196,22 @@ class AnimalController extends AbstractController
     
     
     
-    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'app_api_animal_delete', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
     {
-        $animal = $this->repository->findOneBy(['id' => $id]);
-        if ($animal) {
+        try {
+            $animal = $this->manager->getRepository(Animal::class)->find($id);
+            if (!$animal) {
+                return new JsonResponse(['error' => 'Animal non trouvé'], Response::HTTP_NOT_FOUND);
+            }
+    
             $this->manager->remove($animal);
             $this->manager->flush();
-
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    
+            return new JsonResponse(['message' => 'Animal supprimé avec succès'], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
     }
     
 

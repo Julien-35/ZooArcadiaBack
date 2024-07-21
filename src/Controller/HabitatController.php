@@ -1,11 +1,15 @@
 <?php
 
+// src/Controller/HabitatController.php
+
 namespace App\Controller;
 
 use App\Entity\Habitat;
 use App\Repository\HabitatRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,14 +36,6 @@ class HabitatController extends AbstractController
         return new JsonResponse($responseData, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/habitat', name: 'app_api_arcadia_animal_get_habitats', methods: ['GET'])]
-public function getHabitats(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
-{
-    $habitats = $entityManager->getRepository(Habitat::class)->findAll();
-    $responseData = $serializer->serialize($habitats, 'json');
-    return new JsonResponse($responseData, Response::HTTP_OK, [], true);
-}
-
     #[Route('/{id}', name: 'show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(int $id): JsonResponse
     {
@@ -64,15 +60,13 @@ public function getHabitats(EntityManagerInterface $entityManager, SerializerInt
 
         $data = json_decode($request->getContent(), true);
 
-        // Assurez-vous que les noms de champs correspondent à ceux attendus
         $nom = $data['nom'] ?? $habitat->getNom();
         $description = $data['description'] ?? $habitat->getDescription();
-        $commentaire_habitat = $data['commentaire_habitat'] ?? $habitat->getCommentaireHabitat();
-
+        $commentaireHabitat = $data['commentaireHabitat'] ?? $habitat->getCommentaireHabitat();
 
         $habitat->setNom($nom);
         $habitat->setDescription($description);
-        $habitat->setCommentaireHabitat($data['commentaireHabitat']);
+        $habitat->setCommentaireHabitat($commentaireHabitat);
 
         $this->manager->flush();
 

@@ -90,20 +90,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // public function getRole(): ?Role
-    // {
-    //     return $this->role;
-    // }
+    public function getRole(): ?Role
+    {
+        return $this->role;
+    }
 
-    // public function setRole(?Role $role): static
-    // {
-    //     $this->role = $role;
-    //     return $this;
-    // }
+    public function setRole(?Role $role): static
+    {
+        $this->role = $role;
+        return $this;
+    }
 
     public function getRoles(): array
     {
         // On retourne un tableau avec le rôle actuel de l'utilisateur, par exemple "ROLE_USER"
         return $this->role ? ['ROLE_' . strtoupper($this->role->getLabel())] : ['ROLE_USER'];
     }
+    
+
 }

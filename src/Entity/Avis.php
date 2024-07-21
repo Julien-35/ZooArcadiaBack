@@ -18,7 +18,7 @@ class Avis
     #[ORM\Column(length: 50)]
     public ?string $pseudo = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 500)]
     public ?string $commentaire = null;
 
     #[ORM\Column]

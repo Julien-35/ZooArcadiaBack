@@ -55,8 +55,8 @@ class Role
         if (!$this->users->contains($user)) {
             $this->users->add($user);
             // Assurez-vous que la relation est bidirectionnelle
-            if ($user->getRole() !== $this) {
-                $user->setRole($this);
+            if ($user->getRoles() !== $this) {
+                $user->setRoles($this);
             }
         }
 
@@ -67,8 +67,8 @@ class Role
     {
         if ($this->users->removeElement($user)) {
             // Assurez-vous que la relation est bidirectionnelle
-            if ($user->getRole() === $this) {
-                $user->setRole(null);
+            if ($user->getRoles() === $this) {
+                $user->setRoles(null);
             }
         }
 
