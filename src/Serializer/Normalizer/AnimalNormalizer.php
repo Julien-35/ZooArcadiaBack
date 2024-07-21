@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Serializer;
+namespace App\Serializer\Normalizer;
 
 use App\Entity\Animal;
 use Symfony\Component\Serializer\Normalizer\ContextAwareNormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use App\Serializer\Normalizer\AnimalNormalizer;
 
 class AnimalNormalizer implements ContextAwareNormalizerInterface
 {
