@@ -16,10 +16,18 @@ class DefaultController extends AbstractController
     }
 
     /**
-     * @Route("/api/avis/get", name="show")
+     * @Route("/api/avis/get", name="avis_get", methods={"GET"})
      */
     public function getAvis(): Response
     {
         return new Response('get avis');
+    }
+
+    /**
+     * @Route("/api/horaire/get", name="horaire_get", methods={"GET"})
+     */
+    public function getHoraire(): Response
+    {
+        return $this->json(['message' => 'get horaire']);
     }
 }
