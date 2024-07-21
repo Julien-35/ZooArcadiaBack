@@ -16,7 +16,7 @@ class DefaultController extends AbstractController
     }
 
     /**
-     * @Route("api/avis/get", name="homepage")
+     * @Route("/api/avis/get", name="show")
      */
     public function getAvis(): Response
     {
