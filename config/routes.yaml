@@ -1,4 +1,12 @@
 # config/routes.yaml
 index:
-    path: "/"
+    path: /
     controller: App\Controller\DefaultController::index
+
+horaire_list:
+    path: /api/horaires/get
+    controller: App\Controller\HoraireController::list
+
+avis_get:
+    path: /api/avis/get
+    controller: App\Controller\AvisController::getAvis
