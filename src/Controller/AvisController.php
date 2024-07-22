@@ -70,24 +70,21 @@ class AvisController extends AbstractController
             type: 'string',
         )
     )]
-    public function new(Request $request): JsonResponse
+    public function new(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
+
     {
         $data = json_decode($request->getContent(), true);
-    
-        if (!isset($data['pseudo']) || !isset($data['commentaire']) || !isset($data['isVisible'])) {
-            return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
-        }
-    
+
         $avis = new Avis();
         $avis->setPseudo($data['pseudo']);
         $avis->setCommentaire($data['commentaire']);
         $avis->setIsVisible($data['isVisible']);
-    
-        $this->manager->persist($avis);
-        $this->manager->flush();
-    
-        $responseData = $this->serializer->serialize($avis, 'json');
-    
+
+        $entityManager->persist($avis);
+        $entityManager->flush();
+
+        $responseData = $serializer->serialize($avis, 'json');
+
         return new JsonResponse($responseData, Response::HTTP_CREATED, [], true);
     }
 
