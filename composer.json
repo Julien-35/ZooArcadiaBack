@@ -12,6 +12,7 @@
         "doctrine/dbal": "^3",
         "doctrine/doctrine-bundle": "^2.12",
         "doctrine/doctrine-migrations-bundle": "^3.3",
+        "doctrine/migrations": "*",
         "doctrine/orm": "^3.2",
         "nelmio/api-doc-bundle": "^4.26",
         "nelmio/cors-bundle": "^2.5",
