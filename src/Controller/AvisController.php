@@ -39,9 +39,10 @@ class AvisController extends AbstractController
     #[OA\Post(
         path:"/api/avis/post",
         summary:"Créer un nouvel avis",
-        requestBody : new RequestBody(required: true,
+        requestBody : new RequestBody(
+            required: true,
             description : "Pour créer un nouvel avis, suivez les informations ci-dessous",
-            content : [new Mediatype(mediaType: "application/json",
+            content : new Mediatype(mediaType: "application/json",
                 schema : new Schema (type: "object", properties:[
                     new Property (
                         property: "pseudo",
@@ -59,10 +60,9 @@ class AvisController extends AbstractController
                         example : true
                     ),
                 ])
-            )]
+            )
         )
     )]
-
     #[OA\Response(
         response: 200,
         description: "Création de l'avis",
@@ -73,19 +73,29 @@ class AvisController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
 
     {
-        $data = json_decode($request->getContent(), true);
+        try {
+            $data = json_decode($request->getContent(), true);
+            if (!$data) {
+                throw new \Exception('Invalid JSON data');
+            }
 
-        $avis = new Avis();
-        $avis->setPseudo($data['pseudo']);
-        $avis->setCommentaire($data['commentaire']);
-        $avis->setIsVisible($data['isVisible']);
+            $avis = new Avis();
+            $avis->setPseudo($data['pseudo']);
+            $avis->setCommentaire($data['commentaire']);
+            $avis->setIsVisible($data['isVisible']);
 
-        $entityManager->persist($avis);
-        $entityManager->flush();
+            $entityManager->persist($avis);
+            $entityManager->flush();
 
-        $responseData = $serializer->serialize($avis, 'json');
+            $responseData = $serializer->serialize($avis, 'json');
 
-        return new JsonResponse($responseData, Response::HTTP_CREATED, [], true);
+            return new JsonResponse($responseData, Response::HTTP_CREATED, [], true);
+        } catch (\Exception $e) {
+            // Log the error
+            error_log($e->getMessage());
+
+            return new JsonResponse(['error' => 'An error occurred: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
 
