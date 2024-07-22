@@ -1,7 +1,9 @@
-# config/packages/doctrine_migrations.yaml
 doctrine_migrations:
     migrations_paths:
-        # namespace is arbitrary but should be different from App\Migrations
-        # as migrations classes should NOT be autoloaded
         'DoctrineMigrations': '%kernel.project_dir%/migrations'
-    enable_profiler: false
+    migration_base_class: DoctrineMigrations\AbstractMigration
+    storage:
+        table_storage:
+            table_name: migration_versions
+    services:
+        - '@doctrine.migrations.migration_factory'
