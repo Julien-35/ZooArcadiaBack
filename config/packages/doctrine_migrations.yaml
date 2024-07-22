@@ -1,7 +1,10 @@
-# config/packages/doctrine_migrations.yaml
 doctrine_migrations:
-    migrations_paths:
-        # namespace is arbitrary but should be different from App\Migrations
-        # as migrations classes should NOT be autoloaded
-        'DoctrineMigrations': '%kernel.project_dir%/migrations'
-    enable_profiler: false
+    dir_name: '%kernel.project_dir%/migrations'
+    namespace: DoctrineMigrations
+    table_name: doctrine_migration_versions
+    column_name: version
+    column_length: 14
+    executed_at_column_name: executed_at
+    version: ~
+    all_or_nothing: true
+    check_database_platform: true

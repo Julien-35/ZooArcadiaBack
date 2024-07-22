@@ -10,3 +10,8 @@ horaire_list:
 avis_get:
     path: /api/avis/get
     controller: App\Controller\AvisController::getAvis
+
+    api_avis_post:
+    path: /api/avis/post
+    controller: App\Controller\AvisController::post
+    methods: POST
