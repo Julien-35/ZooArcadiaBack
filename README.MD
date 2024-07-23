@@ -42,17 +42,13 @@ Take a look below !
 $ symfony check:requirements # To check minimal requirements for the project
 ```
 
-### View
-
-![Symfony view](./studi-restaurant-view.png "Symfony configuration view")
-
 ### Installation
 
 1 . **Register a GPG/SSH Key into your Gitlab/Github account** to push verified commits and registry images.
 
 2 . Clone the current repository (SSH):
 ```bash
-$ git clone 'git@github.com:GaetanRole/studi-restaurant-symfony-lts-api.git'
+$ git clone 'https://github.com/Julien-35/ZooArcadiaBack.git'
 ```
 
 3 . Move in and create few `.env.{environment}.local` files, according to your environments with your default configuration.
@@ -105,12 +101,3 @@ This project can be easily hosted on Platform.SH :
 $ symfony project:set-remote [PROJECT_ID]
 $ symfony cloud:environment:push
 ```
-
-## Contributing
-
-Zero contribution is allowed. This software is private for STUDI and STUDI students.
-
-[1]: https://symfony.com/doc/current/reference/requirements.html
-[2]: https://symfony.com/doc/current/configuration.html#the-env-file-environment-variables
-
-[⬆️ Back to top](#studi-restaurant-symfony-lts-api)
