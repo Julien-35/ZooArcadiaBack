@@ -71,33 +71,29 @@ class AvisController extends AbstractController
         )
     )]
     public function new(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
-
     {
         try {
             $data = json_decode($request->getContent(), true);
             if (!$data) {
                 throw new \Exception('Invalid JSON data');
             }
-
+    
             $avis = new Avis();
             $avis->setPseudo($data['pseudo']);
             $avis->setCommentaire($data['commentaire']);
-            $avis->setIsVisible($data['isVisible']);
-
+            $avis->setIsVisible($data['is_visible']); // Utilisez 'is_visible' ici
+    
             $entityManager->persist($avis);
             $entityManager->flush();
-
+    
             $responseData = $serializer->serialize($avis, 'json');
-
+    
             return new JsonResponse($responseData, Response::HTTP_CREATED, [], true);
         } catch (\Exception $e) {
-            // Log the error
             error_log($e->getMessage());
-
             return new JsonResponse(['error' => 'An error occurred: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
 
     #[Route('/get', name:'show', methods:['GET'])]
     public function show(): JsonResponse 

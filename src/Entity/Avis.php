@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\AvisRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AvisRepository::class)]
@@ -21,8 +19,8 @@ class Avis
     #[ORM\Column(length: 500)]
     public ?string $commentaire = null;
 
-    #[ORM\Column]
-    public ?bool $isVisible = null;
+    #[ORM\Column(type: 'boolean')]  // Changez le type à boolean pour correspondre à tinyint(1)
+    public ?bool $is_visible = null;
 
     public function getId(): ?int
     {
@@ -37,7 +35,6 @@ class Avis
     public function setPseudo(string $pseudo): static
     {
         $this->pseudo = $pseudo;
-
         return $this;
     }
 
@@ -49,28 +46,17 @@ class Avis
     public function setCommentaire(string $commentaire): static
     {
         $this->commentaire = $commentaire;
-
         return $this;
     }
 
     public function isIsVisible(): ?bool
     {
-        return $this->isVisible;
+        return $this->is_visible; // Assurez-vous que le nom de la propriété correspond
     }
 
     public function setIsVisible(bool $isVisible): static
     {
-        $this->isVisible = $isVisible;
-
+        $this->is_visible = $isVisible; // Assurez-vous que le nom de la propriété correspond
         return $this;
     }
-
-    public function setAvis(array $newAvis): static 
-    {
-        $this->pseudo = $newAvis['pseudo'];
-        $this->commentaire = $newAvis['commentaire'];
-        $this->isVisible = $newAvis['is_visible'];
-        return $this;
-    }
-
 }
