@@ -51,12 +51,12 @@ class Avis
 
     public function isIsVisible(): ?bool
     {
-        return $this->is_visible; // Assurez-vous que le nom de la propriété correspond
+        return $this->is_visible; 
     }
 
     public function setIsVisible(bool $isVisible): static
     {
-        $this->is_visible = $isVisible; // Assurez-vous que le nom de la propriété correspond
+        $this->is_visible = $isVisible; 
         return $this;
     }
 }
