@@ -104,8 +104,5 @@ class Habitat
 
         return $this;
     }
-
-
-
 }
 
