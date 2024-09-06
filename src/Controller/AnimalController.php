@@ -22,6 +22,7 @@ use OpenApi\Attributes\Property;
 use OpenApi\Attributes\JsonContent;
 use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Schema;
+use Predis\Client;
 
 
 
@@ -110,6 +111,8 @@ class AnimalController extends AbstractController
         $d = \DateTime::createFromFormat($format, $date);
         return $d && $d->format($format) === $date;
     }
+
+    
     #[Route('/get', name: 'show', methods: ['GET'])]
     public function show(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse 
     {
@@ -215,4 +218,24 @@ class AnimalController extends AbstractController
     }
     
 
+
+    #[Route('/increment/{animal}', name: 'app_api_increment_animal', methods: ['POST'])]
+    public function increment(string $animal): JsonResponse
+    {
+        $key = 'animal:' . $animal . ':count';
+        $count = $this->redisClient->incr($key);
+
+        return new JsonResponse(['count' => $count]);
+    }
+
+    #[Route('/get-count/{animal}', name: 'app_api_get_animal_count', methods: ['GET'])]
+    public function getCount(string $animal): JsonResponse
+    {
+        $key = 'animal:' . $animal . ':count';
+        $count = $this->redisClient->get($key);
+
+        return new JsonResponse(['count' => $count ?: 0]); 
+    }
 }
+
+

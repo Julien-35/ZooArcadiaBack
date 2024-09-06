@@ -1,13 +1,8 @@
 # Arcadia
 
-**This repository is a simple project use for STUDI courses written with the last version of Symfony.**
-
 Pour ouvrir en grand, il faut faire ctrl + shift + V
 ```
 /*
- * Copyright (C) STUDI, Inc - All Rights Reserved.
- * Unauthorized copying of this repository, via any medium is strictly prohibited.
- * Proprietary and confidential.
  * Written by  Julien Dubois <arcadia56380@gmail.com>.
  */
 ```

@@ -81,7 +81,7 @@ class AvisController extends AbstractController
             $avis = new Avis();
             $avis->setPseudo($data['pseudo']);
             $avis->setCommentaire($data['commentaire']);
-            $avis->setIsVisible($data['is_visible']); // Utilisez 'is_visible' ici
+            $avis->setIsVisible($data['is_visible']);
     
             $entityManager->persist($avis);
             $entityManager->flush();
@@ -120,6 +120,20 @@ class AvisController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
     return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+    }
+
+    
+    #[Route('/{id}', name:'delete', methods:['DELETE'])]
+    public function delete(int $id): JsonResponse
+    {
+        $avis = $this->repository->findOneBy(['id' => $id]);
+        if ($avis) {
+            $this->manager->remove($avis);
+            $this->manager->flush();
+
+            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        }
+        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
     }
 }
 
