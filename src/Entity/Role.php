@@ -12,18 +12,18 @@ class Role
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 50, unique: true)]
+    #[ORM\Column(length: 50)]
     private ?string $label = null;
 
-    #[ORM\OneToMany(mappedBy: 'role', targetEntity: User::class, cascade: ['persist', 'remove'])]
-    private Collection $users;
+    #[ORM\OneToMany(targetEntity: user::class, mappedBy: 'role')]
+    private Collection $User;
 
     public function __construct()
     {
-        $this->users = new ArrayCollection();
+        $this->User = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -39,36 +39,34 @@ class Role
     public function setLabel(string $label): static
     {
         $this->label = $label;
+
         return $this;
     }
 
     /**
-     * @return Collection<int, User>
+     * @return Collection<int, user>
      */
-    public function getUsers(): Collection
+    public function getUser(): Collection
     {
-        return $this->users;
+        return $this->User;
     }
 
-    public function addUser(User $user): static
+    public function addUser(user $user): static
     {
-        if (!$this->users->contains($user)) {
-            $this->users->add($user);
-            // Assurez-vous que la relation est bidirectionnelle
-            if ($user->getRoles() !== $this) {
-                $user->setRoles($this);
-            }
+        if (!$this->User->contains($user)) {
+            $this->User->add($user);
+            $user->setRole($this);
         }
 
         return $this;
     }
 
-    public function removeUser(User $user): static
+    public function removeUser(user $user): static
     {
-        if ($this->users->removeElement($user)) {
-            // Assurez-vous que la relation est bidirectionnelle
-            if ($user->getRoles() === $this) {
-                $user->setRoles(null);
+        if ($this->User->removeElement($user)) {
+            // set the owning side to null (unless already changed)
+            if ($user->getRole() === $this) {
+                $user->setRole(null);
             }
         }
 
