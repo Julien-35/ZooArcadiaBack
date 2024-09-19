@@ -11,16 +11,16 @@ class Avis
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    public ?int $id = null;
+    private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    public ?string $pseudo = null;
+    private ?string $pseudo = null;
 
     #[ORM\Column(length: 500)]
-    public ?string $commentaire = null;
+    private ?string $commentaire = null;
 
-    #[ORM\Column(type: 'boolean')]  // Changez le type à boolean pour correspondre à tinyint(1)
-    public ?bool $is_visible = null;
+    #[ORM\Column]
+    private ?bool $isvisible = null;
 
     public function getId(): ?int
     {
@@ -35,6 +35,7 @@ class Avis
     public function setPseudo(string $pseudo): static
     {
         $this->pseudo = $pseudo;
+
         return $this;
     }
 
@@ -46,17 +47,19 @@ class Avis
     public function setCommentaire(string $commentaire): static
     {
         $this->commentaire = $commentaire;
+
         return $this;
     }
 
-    public function isIsVisible(): ?bool
+    public function isIsvisible(): ?bool
     {
-        return $this->is_visible; 
+        return $this->isvisible;
     }
 
-    public function setIsVisible(bool $isVisible): static
+    public function setIsvisible(bool $isvisible): static
     {
-        $this->is_visible = $isVisible; 
+        $this->isvisible = $isvisible;
+
         return $this;
     }
 }

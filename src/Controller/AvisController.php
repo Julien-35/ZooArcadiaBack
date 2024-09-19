@@ -35,105 +35,86 @@ class AvisController extends AbstractController
     { 
 }
 
-    #[Route('/post',name:'avis', methods:['POST'])]
-    #[OA\Post(
-        path:"/api/avis/post",
-        summary:"Créer un nouvel avis",
-        requestBody : new RequestBody(
-            required: true,
-            description : "Pour créer un nouvel avis, suivez les informations ci-dessous",
-            content : new Mediatype(mediaType: "application/json",
-                schema : new Schema (type: "object", properties:[
-                    new Property (
-                        property: "pseudo",
-                        type : 'string',
-                        example :'DUDU'
-                    ),
-                    new Property (
-                        property: "commentaire",
-                        type : 'string',
-                        example :'test commentaire'
-                    ),
-                    new Property (
-                        property: "isVisible",
-                        type : 'bool',
-                        example : true
-                    ),
-                ])
-            )
-        )
-    )]
-    #[OA\Response(
-        response: 200,
-        description: "Création de l'avis",
-        content: new OA\JsonContent(
-            type: 'string',
-        )
-    )]
-    public function new(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse
-    {
-        try {
-            $data = json_decode($request->getContent(), true);
-            if (!$data) {
-                throw new \Exception('Invalid JSON data');
-            }
-    
-            $avis = new Avis();
-            $avis->setPseudo($data['pseudo']);
-            $avis->setCommentaire($data['commentaire']);
-            $avis->setIsVisible($data['is_visible']);
-    
-            $entityManager->persist($avis);
-            $entityManager->flush();
-    
-            $responseData = $serializer->serialize($avis, 'json');
-    
-            return new JsonResponse($responseData, Response::HTTP_CREATED, [], true);
-        } catch (\Exception $e) {
-            error_log($e->getMessage());
-            return new JsonResponse(['error' => 'An error occurred: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+#[Route('', name:'create', methods:['POST'])]
+public function createAvis(Request $request): JsonResponse
+{
+    $data = json_decode($request->getContent(), true);
+
+    // Validation des données
+    if (empty($data['pseudo'])) {
+        return new JsonResponse(['error' => 'pseudo is required'], Response::HTTP_BAD_REQUEST);
     }
 
-    #[Route('/get', name:'show', methods:['GET'])]
-    public function show(): JsonResponse 
-    { 
-        $avis = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($avis, 'json');
+    $avis = new Avis();
+    $avis->setPseudo($data['pseudo']);
+    $avis->setCommentaire($data['commentaire'] ?? null);
+    $avis->setIsvisible($data['isvisible'] ?? null);
 
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
-    } 
 
-    #[Route('/{id}', name: 'edit', methods:['PUT'])]
-    public function edit(int $id,Request $request): Response
-    { 
-        $avis = $this->repository->findOneBy(['id' => $id]);
-        if ($avis) {
-            $avis = $this->serializer->deserialize(
-                $request->getContent(),
-                Avis::class,
-                    'json',
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $avis]
-            );
-        $this->manager->flush();
+    $this->manager->persist($avis);
+    $this->manager->flush();
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
-    }
-    return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-    }
-
-    
-    #[Route('/{id}', name:'delete', methods:['DELETE'])]
-    public function delete(int $id): JsonResponse
-    {
-        $avis = $this->repository->findOneBy(['id' => $id]);
-        if ($avis) {
-            $this->manager->remove($avis);
-            $this->manager->flush();
-
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
-        }
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-    }
+    return new JsonResponse(['message' => 'Avis created successfully'], Response::HTTP_CREATED);
 }
 
+#[Route('/get', name:'show', methods:['GET'])]
+public function show(): JsonResponse
+{
+    $aviss = $this->repository->findAll();
+
+    if (empty($aviss)) {
+        return new JsonResponse(['message' => 'Aucun avis trouvé'], Response::HTTP_NOT_FOUND);
+    }
+
+    $avissArray = [];
+    foreach ($aviss as $avis) {
+        $avissArray[] = [
+            'id' => $avis->getId(),
+            'pseudo' => $avis->getPseudo(),
+            'commentaire' => $avis->getCommentaire(),
+            'isVisible' => $avis->isIsvisible(),
+        ];
+    }
+
+    return new JsonResponse($avissArray, Response::HTTP_OK);
+}
+
+#[Route('/{id}', name:'edit', methods:['PUT'])]
+public function updateAvis(Request $request, $id): JsonResponse
+{
+    $avis = $this->manager->getRepository(Avis::class)->find($id);
+
+    if (!$avis) {
+        return new JsonResponse(['error' => 'Avis not found'], Response::HTTP_NOT_FOUND);
+    }
+
+    $data = json_decode($request->getContent(), true);
+
+    if (isset($data['pseudo'])) {
+        $avis->setPseudo($data['pseudo']);
+    }
+    if (isset($data['commentaire'])) {
+        $avis->setCommentaire($data['commentaire']);
+    }
+    if (isset($data['isvisible'])) {
+        $avis->setIsvisible($data['isvisible']);
+    }
+    
+    $this->manager->persist($avis);
+    $this->manager->flush();
+
+    return new JsonResponse(['message' => 'Avis mis à jour correctement'], Response::HTTP_OK);
+}
+
+#[Route('/{id}', name:'delete', methods:['DELETE'])]
+public function delete(int $id): JsonResponse
+{
+    $avis = $this->repository->find($id);
+    if ($avis) {
+        $this->manager->remove($avis);
+        $this->manager->flush();
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+    return new JsonResponse(['error' => 'Avis not found'], Response::HTTP_NOT_FOUND);
+}
+}
