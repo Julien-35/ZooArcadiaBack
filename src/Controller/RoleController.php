@@ -33,69 +33,76 @@ class RoleController extends AbstractController
     ){
     }
 
-    #[Route('api/role', name:'app_api_arcadia_role_' , methods:'POST')]
-    public function new(Request $request): JsonResponse
+    #[Route('', name:'create', methods:['POST'])]
+    public function createRole(Request $request): JsonResponse
     {
-        $role = $this->serializer->deserialize($request->getContent(), Role::class, 'json');
+        $data = json_decode($request->getContent(), true);
+
+        // Validation des données
+        if (empty($data['label'])) {
+            return new JsonResponse(['error' => 'label is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $role = new Role();
+        $role->setLabel($data['label']);
+
+
 
         $this->manager->persist($role);
         $this->manager->flush();
-        
-        $responseData = $this->serializer->serialize($role,'json');
-        
-        $location = $this->urlGenerator->generate(
-            'app_api_arcadia_role_show',
-            ['id' => $role->getId()],
-            UrlGeneratorInterface::ABSOLUTE_URL,
-        );
 
-        return new JsonResponse($responseData, Response::HTTP_CREATED,["Location" => $location], true);
-
+        return new JsonResponse(['message' => 'La Role a été créé correctement'], Response::HTTP_CREATED);
     }
 
-
-    #[Route('/{id}',name:'show', methods: 'GET')]
-    public function show(int $id): JsonResponse
+    #[Route('/get', name:'show', methods:['GET'])]
+    public function show(): JsonResponse
     {
-        $role = $this->repository->FindOneBy (['id'=> $id]);
-        if ($role) {
-            $responseData = $this->serializer->serialize($role, 'json');
-            return new JsonResponse($responseData, Response ::HTTP_OK,[], true);
+        $roles = $this->repository->findAll();
+    
+        if (empty($roles)) {
+            return new JsonResponse(['message' => 'Aucun role trouvé'], Response::HTTP_NOT_FOUND);
         }
-        return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
+    
+        $rolesArray = [];
+        foreach ($roles as $role) {
+            $rolesArray[] = [
+                'id' => $role->getId(),
+                'label' => $role->getLabel(),
+            ];
+        }
+    
+        return new JsonResponse($rolesArray, Response::HTTP_OK);
     }
 
-
-
-
-    #[Route('/{id}', name:'edit', methods: 'PUT')]
-    public function edit(int $id, Request $request): JsonResponse
+    #[Route('/{id}', name:'edit', methods:['PUT'])]
+    public function updateRole(Request $request, $id): JsonResponse
     {
-        $role = $this->repository->findOneBy(['id' => $id]);
-        if ($role) {
-            $role = $this->serializer->deserialize(
-                $request->getContent(),
-                    Role::class,
-                    'json',
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $role]
-            );
+        $role = $this->manager->getRepository(Role::class)->find($id);
+
+        if (!$role) {
+            return new JsonResponse(['error' => 'Role not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['label'])) {
+            $role->setLabel($data['label']);
+        }
+        $this->manager->persist($role);
         $this->manager->flush();
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
-    }
-    return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        return new JsonResponse(['message' => 'la role a été mis à jour correctement'], Response::HTTP_OK);
     }
 
-    #[Route('/{id}',name:'delete', methods: 'DELETE')]
+    #[Route('/{id}', name:'delete', methods:['DELETE'])]
     public function delete(int $id): JsonResponse
     {
-        $role = $this->repository->findOneBy(['id' => $id]);
+        $role = $this->repository->find($id);
         if ($role) {
             $this->manager->remove($role);
             $this->manager->flush();
-
-            return new JsonResponse(NULL, Response ::HTTP_NO_CONTENT);
+            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
         }
-        return new JsonResponse(NULL, Response ::HTTP_NOT_FOUND);
+        return new JsonResponse(['error' => 'Role not found'], Response::HTTP_NOT_FOUND);
     }
 }
