@@ -13,20 +13,19 @@ class Horaire
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 250)]
+    #[ORM\Column(length: 50)]
     private ?string $titre = null;
 
     #[ORM\Column(length: 250)]
     private ?string $message = null;
 
-    #[ORM\Column(length: 5)] // Format horaire HH:MM
-    private ?string $heureDebut = null;
+    #[ORM\Column(length: 5)]
+    private ?string $heure_debut = null;
 
+    #[ORM\Column(length: 5)]
+    private ?string $heure_fin = null;
 
-    #[ORM\Column(length: 5)] // Format horaire HH:MM
-    private ?string $heureFin = null;
-
-    #[ORM\Column(length: 250)]
+    #[ORM\Column(length: 50)]
     private ?string $jour = null;
 
     public function getId(): ?int
@@ -60,24 +59,24 @@ class Horaire
 
     public function getHeureDebut(): ?string
     {
-        return $this->heureDebut;
+        return $this->heure_debut;
     }
 
-    public function setHeureDebut(string $heureDebut): static
+    public function setHeureDebut(string $heure_debut): static
     {
-        $this->heureDebut = $heureDebut;
+        $this->heure_debut = $heure_debut;
 
         return $this;
     }
 
     public function getHeureFin(): ?string
     {
-        return $this->heureFin;
+        return $this->heure_fin;
     }
 
-    public function setHeureFin(string $heureFin): static
+    public function setHeureFin(string $heure_fin): static
     {
-        $this->heureFin = $heureFin;
+        $this->heure_fin = $heure_fin;
 
         return $this;
     }
