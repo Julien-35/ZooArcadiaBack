@@ -83,33 +83,30 @@ class ServiceController extends AbstractController
 
 
     #[Route('/get', name: 'show', methods:['GET'])]
-    #[OA\Get(
-        path:"/api/service/{id}",
-        summary:"Voir un service depuis son id",
-    
-    )]
-    #[OA\Response(
-        response: 200,
-        description: 'Retourner le service via son ID',
-        content: new OA\JsonContent(
-            type: 'string',
-        )
-    )]
-
-    #[OA\Parameter(
-        name: 'nom du service',
-        in: 'query',
-
-    )]
 
 
-    public function show(): JsonResponse 
+    #[Route('/get', name:'show', methods:['GET'])]
+    public function show(): JsonResponse
     {
-        $service = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($service, 'json');
+        $services = $this->repository->findAll();
+    
+        if (empty($services)) {
+            return new JsonResponse(['message' => 'Aucun service trouvé'], Response::HTTP_NOT_FOUND);
+        }
+    
+        $servicesArray = [];
+        foreach ($services as $service) {
+            $servicesArray[] = [
+                'id' => $service->getId(),
+                'nom' => $service->getNom(),
+                'description' => $service->getDescription(),
+                'image_data' => $service->getImageData(),
+            ];
+        }
+    
+        return new JsonResponse($servicesArray, Response::HTTP_OK);
+    }
 
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
-    } 
 
 
     #[Route('/{id}', name:'edit', methods : ['PUT'])]
