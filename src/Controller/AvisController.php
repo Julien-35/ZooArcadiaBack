@@ -72,28 +72,32 @@ class AvisController extends AbstractController
     public function updateAvis(Request $request, $id): JsonResponse
     {
         $avis = $this->manager->getRepository(Avis::class)->find($id);
-
+    
         if (!$avis) {
             return new JsonResponse(['error' => 'Avis not found'], Response::HTTP_NOT_FOUND);
         }
-
+    
         $data = json_decode($request->getContent(), true);
-
-        if (isset($data['pseudo'])) {
-            $avis->setPseudo($data['pseudo']);
-        }
-        if (isset($data['commentaire'])) {
-            $avis->setCommentaire($data['commentaire']);
-        }
-        if (isset($data['isvisible'])) {
-            $avis->setIsvisible($data['isvisible']);
+    
+        // Accéder à l'élément 0 du tableau
+        if (isset($data[0])) {
+            if (isset($data[0]['pseudo'])) {
+                $avis->setPseudo($data[0]['pseudo']);
+            }
+            if (isset($data[0]['commentaire'])) {
+                $avis->setCommentaire($data[0]['commentaire']);
+            }
+            if (isset($data[0]['isVisible'])) {
+                $avis->setIsvisible($data[0]['isVisible']);
+            }
         }
         
         $this->manager->persist($avis);
         $this->manager->flush();
-
+    
         return new JsonResponse(['message' => 'Avis mis à jour correctement'], Response::HTTP_OK);
     }
+    
 
     #[Route('/{id}', name:'delete', methods:['DELETE'])]
     public function delete(int $id): JsonResponse
