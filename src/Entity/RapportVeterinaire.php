@@ -3,8 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\RapportVeterinaireRepository;
-use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: RapportVeterinaireRepository::class)]
 class RapportVeterinaire
@@ -14,15 +14,14 @@ class RapportVeterinaire
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $date = null;
 
-    #[ORM\Column(length: 250)]
+    #[ORM\Column(length: 500)]
     private ?string $detail = null;
 
-    #[ORM\ManyToOne(targetEntity: Animal::class, inversedBy: 'rapportsVeterinaires')]
+    #[ORM\ManyToOne(inversedBy: 'rapport_veterinaire')]
     private ?Animal $animal = null;
-
 
     public function getId(): ?int
     {
@@ -34,7 +33,7 @@ class RapportVeterinaire
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): self
+    public function setDate(\DateTimeInterface $date): static
     {
         $this->date = $date;
 
@@ -46,7 +45,7 @@ class RapportVeterinaire
         return $this->detail;
     }
 
-    public function setDetail(string $detail): self
+    public function setDetail(string $detail): static
     {
         $this->detail = $detail;
 
@@ -58,7 +57,7 @@ class RapportVeterinaire
         return $this->animal;
     }
 
-    public function setAnimal(?Animal $animal): self
+    public function setAnimal(?Animal $animal): static
     {
         $this->animal = $animal;
 

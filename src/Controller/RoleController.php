@@ -7,30 +7,20 @@ use App\Repository\RoleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use OpenApi\Attributes as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use OpenApi\Attributes\RequestBody;
-use OpenApi\Attributes\Property;
-use OpenApi\Attributes\JsonContent;
-use OpenApi\Attributes\MediaType;
-use OpenApi\Attributes\Schema;
 
-
-
-
-#[Route('api/role', name:'app_api_arcadia_role_')]
+#[Route('/api/role', name:'app_api_arcadia_role_')]
 class RoleController extends AbstractController
 {
+    private EntityManagerInterface $manager;
+    private RoleRepository $repository;
+
     public function __construct(
-        private EntityManagerInterface $manager,
-        private RoleRepository $repository,
-        private SerializerInterface $serializer,
-        private UrlGeneratorInterface $urlGenerator,
-    ){
+        EntityManagerInterface $manager,
+        RoleRepository $repository
+    ) {
+        $this->manager = $manager;
+        $this->repository = $repository;
     }
 
     #[Route('', name:'create', methods:['POST'])]

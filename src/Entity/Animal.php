@@ -2,12 +2,10 @@
 
 namespace App\Entity;
 
-use Symfony\Component\HttpFoundation\File;
 use App\Repository\AnimalRepository;
-use Doctrine\DBAL\Types\Types;
-
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AnimalRepository::class)]
@@ -25,35 +23,33 @@ class Animal
     private ?string $etat = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $nourriture = null;
-
-    #[ORM\Column(length: 50)]
     private ?string $grammage = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $created_at = null;
+    #[ORM\Column]
+    private ?\DateTimeImmutable $created_at = null;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::TIME_MUTABLE)]
     private ?\DateTimeInterface $feeding_time = null;
-
-    #[ORM\ManyToOne(targetEntity: Habitat::class, cascade: ['persist'])]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Habitat $habitat = null;
-
-    #[ORM\ManyToOne(targetEntity: Race::class, cascade: ['persist'])]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Race $race = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true, length: 500000)]
     private ?string $image_data = null;
 
-    #[ORM\OneToMany(mappedBy: 'animal', targetEntity: RapportVeterinaire::class)]
-    private Collection $rapportsVeterinaires;
+    #[ORM\ManyToOne(inversedBy: 'animal')]
+    private ?Habitat $habitat = null;
 
+    #[ORM\ManyToOne(inversedBy: 'animal')]
+    private ?Race $race = null;
+
+
+    #[ORM\OneToMany(targetEntity: RapportVeterinaire::class, mappedBy: 'animal')]
+    private Collection $rapport_veterinaire;
+
+    #[ORM\Column(length: 250)]
+    private ?string $nourriture = null;
 
     public function __construct()
     {
-        $this->rapportsVeterinaires = new ArrayCollection();
+        $this->rapport_veterinaire = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -61,18 +57,6 @@ class Animal
         return $this->id;
     }
 
-    public function getImageData(): ?string
-    {
-        return $this->image_data;
-    }
-    
-    public function setImageData(?string $image_data): self
-    {
-        $this->image_data = $image_data;
-
-        return $this;
-    }
-    
     public function getPrenom(): ?string
     {
         return $this->prenom;
@@ -97,6 +81,7 @@ class Animal
         return $this;
     }
 
+    
     public function getNourriture(): ?string
     {
         return $this->nourriture;
@@ -108,6 +93,7 @@ class Animal
 
         return $this;
     }
+    
 
     public function getGrammage(): ?string
     {
@@ -121,15 +107,15 @@ class Animal
         return $this;
     }
 
-
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;
     }
 
-    public function setCreatedAt(\DateTimeInterface $created_at): self
+    public function setCreatedAt(\DateTimeImmutable $created_at): static
     {
         $this->created_at = $created_at;
+
         return $this;
     }
 
@@ -138,9 +124,22 @@ class Animal
         return $this->feeding_time;
     }
 
-    public function setFeedingTime(\DateTimeInterface $feeding_time): self
+    public function setFeedingTime(\DateTimeInterface $feeding_time): static
     {
         $this->feeding_time = $feeding_time;
+
+        return $this;
+    }
+
+    public function getImageData(): ?string
+    {
+        return $this->image_data;
+    }
+
+    public function setImageData(string $image_data): static
+    {
+        $this->image_data = $image_data;
+
         return $this;
     }
 
@@ -149,7 +148,7 @@ class Animal
         return $this->habitat;
     }
 
-    public function setHabitat(?Habitat $habitat): self
+    public function setHabitat(?Habitat $habitat): static
     {
         $this->habitat = $habitat;
 
@@ -160,38 +159,41 @@ class Animal
     {
         return $this->race;
     }
-    
-    public function setRace(?Race $race): self
+
+    public function setRace(?Race $race): static
     {
         $this->race = $race;
-    
+
         return $this;
     }
 
-    public function getRapportsVeterinaires(): Collection
+    /**
+     * @return Collection<int, RapportVeterinaire>
+     */
+    public function getRapportVeterinaire(): Collection
     {
-        return $this->rapportsVeterinaires;
+        return $this->rapport_veterinaire;
     }
 
-    // public function addRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): self
-    // {
-    //     if (!$this->rapportsVeterinaires->contains($rapportVeterinaire)) {
-    //         $this->rapportsVeterinaires[] = $rapportVeterinaire;
-    //         $rapportVeterinaire->setAnimal($this);
-    //     }
+    public function addRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
+    {
+        if (!$this->rapport_veterinaire->contains($rapportVeterinaire)) {
+            $this->rapport_veterinaire->add($rapportVeterinaire);
+            $rapportVeterinaire->setAnimal($this);
+        }
 
-    //     return $this;
-    // }
+        return $this;
+    }
 
-    // public function removeRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): self
-    // {
-    //     if ($this->rapportsVeterinaires->removeElement($rapportVeterinaire)) {
-    //         if ($rapportVeterinaire->getAnimal() === $this) {
-    //             $rapportVeterinaire->setAnimal(null);
-    //         }
-    //     }
+    public function removeRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
+    {
+        if ($this->rapport_veterinaire->removeElement($rapportVeterinaire)) {
+            if ($rapportVeterinaire->getAnimal() === $this) {
+                $rapportVeterinaire->setAnimal(null);
+            }
+        }
 
-    //     return $this;
-    // }
- 
+        return $this;
+    }
+
 }

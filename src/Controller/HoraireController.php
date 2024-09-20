@@ -3,21 +3,27 @@
 namespace App\Controller;
 
 use App\Entity\Horaire;
+use DateTime;
+use DateTimeImmutable;
 use App\Repository\HoraireRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-#[Route('api/horaires', name: 'app_api_arcadia_horaire_')]
+#[Route('/api/horaire', name:'app_api_arcadia_horaire_')]
 class HoraireController extends AbstractController
 {
+    private EntityManagerInterface $manager;
+    private HoraireRepository $repository;
+
     public function __construct(
-        private EntityManagerInterface $manager,
-        private HoraireRepository $repository,
-        private SerializerInterface $serializer
-    ) {}
+        EntityManagerInterface $manager,
+        HoraireRepository $repository
+    ) {
+        $this->manager = $manager;
+        $this->repository = $repository;
+    }
 
     #[Route('', name:'create', methods:['POST'])]
     public function createHoraire(Request $request): JsonResponse

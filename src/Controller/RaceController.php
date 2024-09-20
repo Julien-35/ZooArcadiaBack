@@ -3,99 +3,96 @@
 namespace App\Controller;
 
 use App\Entity\Race;
-use DateTimeImmutable ;
 use App\Repository\RaceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use OpenApi\Attributes as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use OpenApi\Attributes\RequestBody;
-use OpenApi\Attributes\Property;
-use OpenApi\Attributes\JsonContent;
-use OpenApi\Attributes\MediaType;
-use OpenApi\Attributes\Schema;
-
 
 #[Route('/api/race', name:'app_api_arcadia_race_')]
 class RaceController extends AbstractController
 {
     private EntityManagerInterface $manager;
     private RaceRepository $repository;
-    private SerializerInterface $serializer;
-    private UrlGeneratorInterface $urlGenerator;
 
     public function __construct(
         EntityManagerInterface $manager,
-        RaceRepository $repository,
-        SerializerInterface $serializer,
-        UrlGeneratorInterface $urlGenerator
+        RaceRepository $repository
     ) {
         $this->manager = $manager;
         $this->repository = $repository;
-        $this->serializer = $serializer;
-        $this->urlGenerator = $urlGenerator;
     }
 
     #[Route('', name:'create', methods:['POST'])]
-    public function new(Request $request): JsonResponse
+    public function createRace(Request $request): JsonResponse
     {
-        $race = $this->serializer->deserialize($request->getContent(), Race::class, 'json');
+        $data = json_decode($request->getContent(), true);
+
+        // Validation des données
+        if (empty($data['label'])) {
+            return new JsonResponse(['error' => 'label is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $race = new Race();
+        $race->setLabel($data['label']);
+
+
+
         $this->manager->persist($race);
         $this->manager->flush();
-        
-        $responseData = $this->serializer->serialize($race, 'json');
-        
-        $location = $this->urlGenerator->generate(
-            'app_api_arcadia_race_show',
-            ['id' => $race->getId()],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
 
-        return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
+        return new JsonResponse(['message' => 'La Race a été créé correctement'], Response::HTTP_CREATED);
     }
 
     #[Route('/get', name:'show', methods:['GET'])]
     public function show(): JsonResponse
     {
         $races = $this->repository->findAll();
-        $responseData = $this->serializer->serialize($races, 'json');
-
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+    
+        if (empty($races)) {
+            return new JsonResponse(['message' => 'Aucun race trouvé'], Response::HTTP_NOT_FOUND);
+        }
+    
+        $racesArray = [];
+        foreach ($races as $race) {
+            $racesArray[] = [
+                'id' => $race->getId(),
+                'label' => $race->getLabel(),
+            ];
+        }
+    
+        return new JsonResponse($racesArray, Response::HTTP_OK);
     }
 
     #[Route('/{id}', name:'edit', methods:['PUT'])]
-    public function edit(int $id, Request $request): JsonResponse
+    public function updateRace(Request $request, $id): JsonResponse
     {
-        $race = $this->repository->findOneBy(['id' => $id]);
-        if ($race) {
-            $race = $this->serializer->deserialize(
-                $request->getContent(),
-                Race::class,
-                'json',
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $race]
-            );
-            $this->manager->flush();
+        $race = $this->manager->getRepository(Race::class)->find($id);
 
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        if (!$race) {
+            return new JsonResponse(['error' => 'Race not found'], Response::HTTP_NOT_FOUND);
         }
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['label'])) {
+            $race->setLabel($data['label']);
+        }
+        $this->manager->persist($race);
+        $this->manager->flush();
+
+        return new JsonResponse(['message' => 'la race a été mis à jour correctement'], Response::HTTP_OK);
     }
 
     #[Route('/{id}', name:'delete', methods:['DELETE'])]
     public function delete(int $id): JsonResponse
     {
-        $race = $this->repository->findOneBy(['id' => $id]);
+        $race = $this->repository->find($id);
         if ($race) {
             $this->manager->remove($race);
             $this->manager->flush();
-
             return new JsonResponse(null, Response::HTTP_NO_CONTENT);
         }
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        return new JsonResponse(['error' => 'Race not found'], Response::HTTP_NOT_FOUND);
     }
 }

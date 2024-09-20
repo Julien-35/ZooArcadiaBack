@@ -2,128 +2,121 @@
 
 namespace App\Controller;
 
-
 use App\Entity\RapportVeterinaire;
 use App\Repository\RapportVeterinaireRepository;
-use App\Entity\Animal;
-use App\Repository\AnimalRepository; 
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-#[Route('/api/rapportveterinaire', name: 'app_api_arcadia_rapportveterinaire_')]
+#[Route('/api/rapportveterinaire', name: 'app_api_rapport_veterinaire_')]
 class RapportVeterinaireController extends AbstractController
 {
+    private EntityManagerInterface $manager;
     private RapportVeterinaireRepository $repository;
-    private AnimalRepository $animalRepository;
-    private SerializerInterface $serializer;
 
     public function __construct(
-        RapportVeterinaireRepository $repository,
-        AnimalRepository $animalRepository,
-        SerializerInterface $serializer
+        EntityManagerInterface $manager,
+        RapportVeterinaireRepository $repository
     ) {
+        $this->manager = $manager;
         $this->repository = $repository;
-        $this->animalRepository = $animalRepository;
-        $this->serializer = $serializer;
     }
 
-    #[Route('/post', name: 'app_api_arcadia_rapportveterinaire_new', methods: ['POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    #[Route('', name: 'create', methods: ['POST'])]
+    public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
-        // Vérifier la présence des données
-        if (!isset($data['date']) || !isset($data['detail']) || !isset($data['animal']['prenom'])) {
-            return new JsonResponse(['error' => 'Données invalides'], Response::HTTP_BAD_REQUEST);
+        if (empty($data['detail']) || empty($data['animal_id'])) {
+            return new JsonResponse(['error' => 'Detail and animal_id are required'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Convertir la date en DateTime
-        try {
-            $date = new \DateTime($data['date']);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => 'Date invalide'], Response::HTTP_BAD_REQUEST);
-        }
+        $animal = $this->manager->getRepository(Animal::class)->find($data['animal_id']);
 
-        $detail = $data['detail'];
-        $animalPrenom = $data['animal']['prenom'];
-
-        // Trouver l'animal par son prénom
-        $animal = $this->animalRepository->findOneBy(['prenom' => $animalPrenom]);
         if (!$animal) {
-            return new JsonResponse(['error' => 'Animal non trouvé'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Animal not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Créer et sauvegarder le rapport vétérinaire
-        $rapportveterinaire = new RapportVeterinaire();
-        $rapportveterinaire->setDate($date);
-        $rapportveterinaire->setDetail($detail);
-        $rapportveterinaire->setAnimal($animal);
+        $rapport = new RapportVeterinaire();
+        $rapport->setDetail($data['detail']);
+        $rapport->setDate(new \DateTime()); 
 
-        $entityManager->persist($rapportveterinaire);
-        $entityManager->flush();
+        $rapport->setAnimal($animal);
 
-        // Sérialiser la réponse
-        $responseData = $this->serializer->serialize($rapportveterinaire, 'json', ['groups' => ['rapport_veterinaire']]);
+        $this->manager->persist($rapport);
+        $this->manager->flush();
 
-        return new JsonResponse($responseData, Response::HTTP_CREATED, [], true);
+        return new JsonResponse(['message' => 'Rapport vétérinaire créé avec succès'], Response::HTTP_CREATED);
     }
-
 
     #[Route('/get', name: 'show', methods: ['GET'])]
-    public function show(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse 
+    public function show(): JsonResponse
     {
-        $queryBuilder = $entityManager->createQueryBuilder();
-        $queryBuilder->select('r', 'a')
-            ->from(RapportVeterinaire::class, 'r')
-            ->leftJoin('r.animal', 'a');
+        $rapports = $this->repository->findAll(); // Récupère tous les rapports vétérinaires
     
-        $query = $queryBuilder->getQuery();
-        $rapportVeterinaires = $query->getArrayResult();
-    
-        $responseData = $serializer->serialize($rapportVeterinaires, 'json');
-    
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
-    }
-
-
-    #[Route('/{id}', name: 'list', methods: ['GET'])]
-    public function list(): JsonResponse
-    {
-        $rapportVeterinaires = $this->repository->findAll();
-    
-        if (empty($rapportVeterinaires)) {
-            return new JsonResponse(['error' => 'No rapports found'], Response::HTTP_NOT_FOUND);
+        if (empty($rapports)) {
+            return new JsonResponse(['error' => 'No rapport vétérinaire found'], Response::HTTP_NOT_FOUND);
         }
     
-        $responseData = $this->serializer->serialize($rapportVeterinaires, 'json');
-     
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+        $rapportsData = array_map(function ($rapport) {
+            return [
+                'id' => $rapport->getId(), // Ajoutez l'ID si nécessaire
+                'date' => $rapport->getDate()->format('d-m-Y'),
+                'detail' => $rapport->getDetail(),
+                'animal_prenom' => $rapport->getAnimal() ? $rapport->getAnimal()->getPrenom() : null
+            ];
+        }, $rapports);
+    
+        return new JsonResponse($rapportsData, Response::HTTP_OK);
     }
 
-
-    #[Route('/{id}', name: 'app_api_arcadia_rapportveterinaire_edit', methods: ['PUT'])]
-    public function edit(int $id, Request $request): JsonResponse
+    #[Route('/{id}', name: 'update', methods: ['PUT'])]
+    public function update(Request $request, int $id): JsonResponse
     {
-        $rapportveterinaire = $this->repository->find($id);
+        $rapport = $this->repository->find($id);
 
-        if (!$rapportveterinaire) {
-            return new JsonResponse(['message' => 'Rapport vétérinaire non trouvé'], Response::HTTP_NOT_FOUND);
+        if (!$rapport) {
+            return new JsonResponse(['error' => 'Rapport vétérinaire not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $updatedRapportVeterinaire = $this->serializer->deserialize(
-            $request->getContent(),
-            RapportVeterinaire::class,
-            'json',
-            [AbstractNormalizer::OBJECT_TO_POPULATE => $rapportveterinaire]
-        );
+        $data = json_decode($request->getContent(), true);
 
+        if (isset($data['detail'])) {
+            $rapport->setDetail($data['detail']);
+        }
+        if (isset($data['date'])) {
+            try {
+                $date = new \DateTime($data['date']);
+                $rapport->setDate($date);
+            } catch (\Exception $e) {
+                return new JsonResponse(['error' => 'Invalid date format'], Response::HTTP_BAD_REQUEST);
+            }
+        }
+        if (isset($data['animal_id'])) {
+            $animal = $this->manager->getRepository(Animal::class)->find($data['animal_id']);
+            if (!$animal) {
+                return new JsonResponse(['error' => 'Animal not found'], Response::HTTP_NOT_FOUND);
+            }
+            $rapport->setAnimal($animal);
+        }
+
+        $this->manager->persist($rapport);
+        $this->manager->flush();
+
+        return new JsonResponse(['message' => 'Rapport vétérinaire mis à jour avec succès'], Response::HTTP_OK);
+    }
+
+    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    public function delete(int $id): JsonResponse
+    {
+        $rapport = $this->repository->find($id);
+
+        if (!$rapport) {
+            return new JsonResponse(['error' => 'Rapport vétérinaire not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $this->manager->remove($rapport);
         $this->manager->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);

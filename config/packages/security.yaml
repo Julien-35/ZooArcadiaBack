@@ -20,8 +20,7 @@ security:
                 check_path: /api/login
                 username_path: email
                 password_path: password
-            custom_authenticator: App\Security\ApiTokenAuthentificatorAuthenticator
-
+            custom_authenticator: App\Security\ApiTokenAuthenticator
         
 
     access_control:
