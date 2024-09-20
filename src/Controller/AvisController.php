@@ -24,7 +24,7 @@ class AvisController extends AbstractController
     }
     
 
-    #[Route('', name:'create', methods:['POST'])]
+    #[Route('/post', name:'create', methods:['POST'])]
     public function createAvis(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
