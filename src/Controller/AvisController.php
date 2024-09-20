@@ -23,29 +23,29 @@ class AvisController extends AbstractController
         $this->repository = $repository;
     }
     
-
     #[Route('/post', name:'create', methods:['POST'])]
     public function createAvis(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
-        // Validation des données
-        if (empty($data['pseudo'])) {
+    
+        // Vérifier si le tableau n'est pas vide
+        if (empty($data) || !isset($data[0]['pseudo'])) {
             return new JsonResponse(['error' => 'pseudo is required'], Response::HTTP_BAD_REQUEST);
         }
-
+    
+        // On prend le premier élément du tableau
+        $avisData = $data[0];
+    
         $avis = new Avis();
-        $avis->setPseudo($data['pseudo']);
-        $avis->setCommentaire($data['commentaire'] ?? null);
-        $avis->setIsvisible($data['isvisible'] ?? null);
-
-
+        $avis->setPseudo($avisData['pseudo']);
+        $avis->setCommentaire($avisData['commentaire'] ?? null);
+        $avis->setIsvisible($avisData['isVisible'] ?? null);
+    
         $this->manager->persist($avis);
         $this->manager->flush();
-
+    
         return new JsonResponse(['message' => 'Avis created successfully'], Response::HTTP_CREATED);
     }
-
     #[Route('/get', name:'show', methods:['GET'])]
     public function show(): JsonResponse
     {
