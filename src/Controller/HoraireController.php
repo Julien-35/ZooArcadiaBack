@@ -88,7 +88,7 @@ class HoraireController extends AbstractController
         if (isset($data['titre'])) {
             $horaire->setTitre($data['titre']);
         }
-        if (isset($data['etmessageat'])) {
+        if (isset($data['message'])) {
             $horaire->setMessage($data['message']);
         }
         if (isset($data['heure_debut'])) {
