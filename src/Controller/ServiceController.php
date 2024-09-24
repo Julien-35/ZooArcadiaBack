@@ -106,13 +106,10 @@ class ServiceController extends AbstractController
             return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
         }
     
-        // Validation du CSRF Token
-        if (!$this->isCsrfTokenValid('delete'.$id, $request->request->get('X-AUTH-TOKEN'))) {
-            return new JsonResponse(['error' => 'Invalid CSRF token'], Response::HTTP_FORBIDDEN);
-        }
-    
+        // Récupérer le service par ID
         $service = $this->repository->find($id);
         if ($service) {
+            // Supprimer le service
             $this->manager->remove($service);
             $this->manager->flush();
             return new JsonResponse(null, Response::HTTP_NO_CONTENT);
