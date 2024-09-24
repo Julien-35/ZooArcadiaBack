@@ -78,37 +78,43 @@ class HoraireController extends AbstractController
     public function updateHoraire(Request $request, $id): JsonResponse
     {
         $horaire = $this->manager->getRepository(Horaire::class)->find($id);
-
+    
         if (!$horaire) {
             return new JsonResponse(['error' => 'Horaire not found'], Response::HTTP_NOT_FOUND);
         }
-
+    
         $data = json_decode($request->getContent(), true);
-
+    
+        // Sanitize and validate input
         if (isset($data['titre'])) {
-            $horaire->setTitre($data['titre']);
+            $horaire->setTitre($this->sanitizeInput($data['titre']));
         }
         if (isset($data['message'])) {
-            $horaire->setMessage($data['message']);
+            $horaire->setMessage($this->sanitizeInput($data['message']));
         }
         if (isset($data['heure_debut'])) {
+            // Assurez-vous que l'heure_debut est dans un format valide, par exemple, une date/heure
             $horaire->setHeureDebut($data['heure_debut']);
         }
         if (isset($data['heure_fin'])) {
+            // Assurez-vous que l'heure_fin est dans un format valide, par exemple, une date/heure
             $horaire->setHeureFin($data['heure_fin']);
         }
-
         if (isset($data['jour'])) {
-            $horaire->setJour($data['jour']);
+            $horaire->setJour($this->sanitizeInput($data['jour']));
         }
-
-        
+    
         $this->manager->persist($horaire);
         $this->manager->flush();
-
+    
         return new JsonResponse(['message' => 'Horaire mis à jour correctement'], Response::HTTP_OK);
     }
-
+    
+    // Fonction pour nettoyer les entrées utilisateur
+    private function sanitizeInput(string $input): string
+    {
+        return htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+    }
     #[Route('/{id}', name:'delete', methods:['DELETE'])]
     public function delete(int $id): JsonResponse
     {
