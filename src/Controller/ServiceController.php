@@ -27,23 +27,28 @@ class ServiceController extends AbstractController
     public function createService(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
+    
+        // Vérification de la présence du champ 'nom'
         if (empty($data['nom'])) {
             return new JsonResponse(['error' => 'nom est obligatoire'], Response::HTTP_BAD_REQUEST);
         }
-
+    
+        // Création d'une nouvelle instance de Service
         $service = new Service();
-        $service->setNom($data['nom']);
-        $service->setDescription($data['description']);
+    
+        // Nettoyer et valider les données d'entrée
+        $service->setNom($this->sanitizeInput($data['nom']));
+        $service->setDescription($this->sanitizeInput($data['description'] ?? ''));
         $service->setImageData($data['image_data'] ?? null);
-
+    
+        // Persist the service
         $this->manager->persist($service);
         $this->manager->flush();
-
-        return new JsonResponse(['message' => 'La Service a été créé correctement'], Response::HTTP_CREATED);
+    
+        return new JsonResponse(['message' => 'Le service a été créé correctement'], Response::HTTP_CREATED);
     }
 
-    #[Route('/get', name:'show', methods:['GET'])]
+    #[Route('/get', name: 'show', methods: ['GET'])]
     public function show(): JsonResponse
     {
         $services = $this->repository->findAll();
@@ -56,9 +61,9 @@ class ServiceController extends AbstractController
         foreach ($services as $service) {
             $servicesArray[] = [
                 'id' => $service->getId(),
-                'nom' => $service->getNom(),
-                'description' => $service->getDescription(),
-                'image_data' => $service->getImageData(),
+                'nom' => $this->sanitizeInput($service->getNom()),
+                'description' => $this->sanitizeInput($service->getDescription()),
+                'image_data' => $this->sanitizeInput($service->getImageData()), 
             ];
         }
     
@@ -77,15 +82,14 @@ class ServiceController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (isset($data['nom'])) {
-            $service->setNom($data['nom']);
+            $service->setNom($this->sanitizeInput($data['nom']));
         }
-
         if (isset($data['description'])) {
-            $service->setDescription($data['description']);
+            $service->setDescription($this->sanitizeInput($data['description']));
         }
 
         if (isset($data['image_data'])) {
-            $service->setImageData($data['image_data']);
+            $service->setImageData($this->sanitizeInput($data['image_data']));
         }
         
         $this->manager->persist($service);
@@ -94,9 +98,19 @@ class ServiceController extends AbstractController
         return new JsonResponse(['message' => 'la service a été mis à jour correctement'], Response::HTTP_OK);
     }
 
-    #[Route('/{id}', name:'delete', methods:['DELETE'])]
-    public function delete(int $id): JsonResponse
+    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    public function delete(Request $request, int $id): JsonResponse
     {
+        // Vérification de l'autorisation
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
+        }
+    
+        // Validation du CSRF Token
+        if (!$this->isCsrfTokenValid('delete'.$id, $request->request->get('_token'))) {
+            return new JsonResponse(['error' => 'Invalid CSRF token'], Response::HTTP_FORBIDDEN);
+        }
+    
         $service = $this->repository->find($id);
         if ($service) {
             $this->manager->remove($service);
@@ -105,4 +119,12 @@ class ServiceController extends AbstractController
         }
         return new JsonResponse(['error' => 'Service not found'], Response::HTTP_NOT_FOUND);
     }
+    
+        // Fonction pour nettoyer les entrées utilisateur
+    private function sanitizeInput(string $input): string
+    {
+        return htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+    }
+
 }
+

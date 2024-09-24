@@ -115,6 +115,8 @@ class HoraireController extends AbstractController
     {
         return htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
     }
+
+    
     #[Route('/{id}', name:'delete', methods:['DELETE'])]
     public function delete(int $id): JsonResponse
     {
