@@ -107,7 +107,7 @@ class ServiceController extends AbstractController
         }
     
         // Validation du CSRF Token
-        if (!$this->isCsrfTokenValid('delete'.$id, $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('delete'.$id, $request->request->get('X-AUTH-TOKEN'))) {
             return new JsonResponse(['error' => 'Invalid CSRF token'], Response::HTTP_FORBIDDEN);
         }
     
