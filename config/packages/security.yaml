@@ -33,7 +33,9 @@ security:
         - { path: ^/api/nourriture, roles: PUBLIC_ACCESS }
         - { path: ^/api/service, roles: PUBLIC_ACCESS }
         - { path: ^/api/animal, roles: PUBLIC_ACCESS }
-        - { path: ^/api/horaires, roles: PUBLIC_ACCESS }
+        - { path: ^/api/horaire, roles: PUBLIC_ACCESS }
+        - { path: ^/api/horaire/put, roles: ROLE_ADMIN }
+
         - { path: ^/api/image, roles: PUBLIC_ACCESS }
         - { path: ^/api/rapportveterinaire, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: PUBLIC_ACCESS }
