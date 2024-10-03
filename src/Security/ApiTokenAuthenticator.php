@@ -43,7 +43,6 @@ class ApiTokenAuthenticator  extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        // You can return a custom response or null if you just want to allow access
         return null;
     }
 

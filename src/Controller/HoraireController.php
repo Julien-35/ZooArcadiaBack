@@ -52,13 +52,15 @@ class HoraireController extends AbstractController
     #[Route('/get', name:'show', methods:['GET'])]
     public function show(): JsonResponse
     {
+        // Récupérer tous les horaire
         $horaires = $this->repository->findAll();
-    
-        // Débogage des horaires
+        
+        // Vérifier si aucun horaire n'est trouvé
         if (empty($horaires)) {
             return new JsonResponse(['message' => 'Aucun horaire trouvé'], Response::HTTP_NOT_FOUND);
         }
-    
+        
+        // Initialiser un tableau pour les horaire
         $horairesArray = [];
         foreach ($horaires as $horaire) {
             $horairesArray[] = [
@@ -67,10 +69,11 @@ class HoraireController extends AbstractController
                 'message' => $horaire->getMessage(),
                 'heure_debut' => $horaire->getHeureDebut(),
                 'heure_fin' => $horaire->getHeureFin(),
-                'jour' => $horaire->getJour(),  // Assurez-vous que le nom de la méthode est correct
+                'jour' => $horaire->getJour(), // Assurez-vous que le nom de la méthode est correct
             ];
         }
-    
+        
+        // Retourner la réponse JSON avec le tableau d'horaire
         return new JsonResponse($horairesArray, Response::HTTP_OK);
     }
 

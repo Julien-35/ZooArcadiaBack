@@ -16,9 +16,11 @@
         "doctrine/orm": "^3.2",
         "nelmio/api-doc-bundle": "^4.26",
         "nelmio/cors-bundle": "^2.5",
+        "ocramius/proxy-manager": "*",
         "phpdocumentor/reflection-docblock": "^5.4",
         "phpstan/phpdoc-parser": "^1.29",
         "predis/predis": "^2.2",
+        "snc/redis-bundle": "*",
         "symfony/asset": "5.4.*",
         "symfony/console": "5.4.*",
         "symfony/doctrine-messenger": "5.4.*",
@@ -71,6 +73,12 @@
             "App\\Tests\\": "tests/"
         }
     },
+    "repositories": [
+    {
+        "type": "composer",
+        "url": "http://repo.packagist.org"
+    }
+],
     "replace": {
         "symfony/polyfill-ctype": "*",
         "symfony/polyfill-iconv": "*",

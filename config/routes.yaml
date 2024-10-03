@@ -1,8 +1,8 @@
-# config/routes.yaml
 index:
     path: /
     controller: App\Controller\DefaultController::index
 
+# Other routes
 horaire_list:
     path: /api/horaires/get
     controller: App\Controller\HoraireController::list
@@ -10,4 +10,3 @@ horaire_list:
 avis_get:
     path: /api/avis/get
     controller: App\Controller\AvisController::getAvis
-

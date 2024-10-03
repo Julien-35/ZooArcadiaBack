@@ -1,15 +1,15 @@
 # config/packages/nelmio_cors.yaml
 nelmio_cors:
     defaults:
-        allow_origin: ['*']  # Remplace par le domaine autorisé
+        allow_origin: ['https://arcadia35380-f680d3a74682.herokuapp.com','http://localhost:3000', 'https://127.0.0.1:8000']  
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE']
-        allow_headers: ['content-type', 'authorization', 'x-auth-token']
+        allow_headers: ['Content-Type', 'Authorization', 'X-AUTH-TOKEN']
         expose_headers: ['link']
         max_age: 3600
     paths:
         '^/api/':  # Appliquer ces règles à toutes les routes qui commencent par /api/
-            allow_origin: ['*']  # Remplace par le domaine autorisé
+            allow_origin: ['https://arcadia35380-f680d3a74682.herokuapp.com','http://localhost:3000', 'https://127.0.0.1:8000']  
             allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE']
-            allow_headers: ['content-type', 'authorization', 'x-auth-token']
+            allow_headers: ['Content-Type', 'Authorization', 'X-AUTH-TOKEN']
             expose_headers: ['link']
             max_age: 3600

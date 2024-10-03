@@ -1,0 +1,7 @@
+# config/packages/snc_redis.yaml
+# snc_redis:
+#     clients:
+#         default:
+#             type: phpredis
+#             alias: default
+#             dsn: "redis://localhost:6379"

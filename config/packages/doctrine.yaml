@@ -1,7 +1,7 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
-        server_version: '10.4'  # Assurez-vous que c'est la version correcte pour votre base de données
+        server_version: '10.4'  
         charset: utf8mb4
         use_savepoints: true
 
@@ -19,7 +19,6 @@ doctrine:
 when@test:
     doctrine:
         dbal:
-            # "TEST_TOKEN" est généralement défini par ParaTest
             dbname_suffix: '_test%env(default::TEST_TOKEN)%'
 
 when@prod:

@@ -77,6 +77,9 @@
             "./tests/bootstrap.php"
         ]
     },
+    "snc/redis-bundle": {
+        "version": "4.7.2"
+    },
     "symfony/console": {
         "version": "5.4",
         "recipe": {
